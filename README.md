@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Talazan Storefront
 
-## Getting Started
+Next.js 15 tabanlı çok kiracılı (multi-tenant) e-ticaret vitrini. `talazan-pes-server` backend API'si ile entegre çalışır.
 
-First, run the development server:
+## Teknolojiler
+
+- Next.js 15 (App Router), React 19, TypeScript (strict)
+- Tailwind CSS v4, shadcn/ui bileşenleri
+- TanStack Query, React Hook Form, Zod
+- Axios, Zustand, Framer Motion, Lucide
+
+## Kurulum
 
 ```bash
+cp .env.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Ortam Değişkenleri
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Değişken | Açıklama | Varsayılan |
+|----------|----------|------------|
+| `NEXT_PUBLIC_API_URL` | Backend API base URL | `http://localhost:8080/api` |
+| `NEXT_PUBLIC_FIRMA_ID` | Varsayılan firma ID | `1` |
+| `NEXT_PUBLIC_SITE_URL` | Site URL (SEO) | `http://localhost:3000` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Multi-tenant: `?firmaId=123` query parametresi veya `NEXT_PUBLIC_FIRMA_ID`.
 
-## Learn More
+## Proje Yapısı
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/           # Next.js sayfaları (Türkçe rotalar)
+├── modules/       # Özellik modülleri (home, catalog, auth, cart...)
+├── components/    # UI ve layout bileşenleri
+├── providers/     # React context sağlayıcıları
+├── hooks/         # Custom hooks + Zustand stores
+├── services/      # API servis katmanı
+├── api/           # Axios client + interceptors
+├── config/        # Env ve sabitler
+├── themes/        # Tema motoru (minimal, modern, fashion...)
+├── types/         # TypeScript tipleri
+├── utils/         # SEO ve yardımcılar
+└── styles/        # Global CSS
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Endpoints
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Backend: `/api/public/store/**`
 
-## Deploy on Vercel
+- `GET /config?firmaId=` — Mağaza yapılandırması
+- `GET /products`, `/categories`, `/brands`, `/search`
+- `GET /product/{slug}`, `/pages/{slug}`
+- `POST /orders` — Sipariş oluşturma
+- `POST /auth/register|login|refresh`
+- `GET|PUT /account/profile`, `/addresses`, `/favorites`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Temalar
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Desteklenen temalar: `minimal`, `modern`, `fashion`, `electronics`, `cosmetics`
+
+Aktif tema backend `StoreConfigDto.aktifTemaKodu` üzerinden yüklenir.
+
+## Sayfalar
+
+- `/` — Ana sayfa (dinamik bölümler)
+- `/kategori/[slug]`, `/urun/[slug]`, `/ara`
+- `/sepet`, `/odeme`
+- `/giris`, `/kayit`, `/hesabim`, `/siparisler`, `/favoriler`, `/adresler`
+- `/hakkimizda`, `/iletisim`, `/sss`, `/blog`, `/gizlilik`, `/kosullar`
+
+## Geliştirme
+
+```bash
+npm run dev    # Geliştirme sunucusu
+npm run build  # Production build
+npm run start  # Production sunucu
+npm run lint   # ESLint
+```
