@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -10,30 +10,78 @@ import { z } from "zod";
 import { ProductCard } from "@/components/product/product-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContentSkeleton, ProductGridSkeleton } from "@/components/ui/skeleton-loaders";
 import { LABELS, ROUTES } from "@/config/constants";
+import { useAddToCart } from "@/hooks/use-add-to-cart";
 import { useAuthStore, useOrdersStore } from "@/hooks/use-auth-store";
+import { useSidePanelStore } from "@/hooks/use-side-panel-store";
 import { useFirmaId } from "@/hooks/use-firma-id";
 import { getApiErrorMessage } from "@/api/client";
 import { accountService } from "@/services/account.service";
 import { storeService } from "@/services/store.service";
-import { formatPrice } from "@/lib/utils";
+import { formatPhoneInput, isPhoneValid } from "@/lib/phone";
+import { cn, formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
   ad: z.string().min(2),
   soyad: z.string().min(2),
   email: z.string().email(),
-  telefon: z.string().optional(),
+  telefon: z
+    .string()
+    .optional()
+    .refine((value) => !value?.trim() || isPhoneValid(value), "Geçerli bir telefon numarası girin"),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
 
+const accountMenu = [
+  { href: ROUTES.account, label: LABELS.account },
+  { href: ROUTES.orders, label: LABELS.orders },
+  { href: ROUTES.favorites, label: LABELS.favorites },
+  { href: ROUTES.addresses, label: LABELS.addresses },
+];
+
+function AccountShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const logout = useAuthStore((s) => s.logout);
+
+  return (
+    <div className="grid items-start gap-4 grid-cols-[minmax(9.5rem,220px)_minmax(0,1fr)] sm:gap-8">
+      <aside className="rounded-[var(--radius-card)] border border-border bg-card p-2 sm:p-3">
+        <nav className="flex flex-col gap-1">
+          {accountMenu.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "rounded-[var(--radius-btn)] px-3 py-2.5 text-sm font-semibold",
+                  active ? "bg-primary text-white" : "text-foreground hover:bg-muted",
+                )}
+                aria-current={active ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+        <Button type="button" variant="outline" className="mt-3 w-full text-foreground" onClick={logout}>
+          {LABELS.logout}
+        </Button>
+      </aside>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
 export function AccountProfile() {
   const router = useRouter();
-  const { user, isHydrated, logout } = useAuthStore();
+  const { user, isHydrated } = useAuthStore();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -52,7 +100,7 @@ export function AccountProfile() {
     register,
     handleSubmit,
     reset,
-    formState: { isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) });
 
   useEffect(() => {
@@ -61,7 +109,7 @@ export function AccountProfile() {
         ad: profile.ad ?? "",
         soyad: profile.soyad ?? "",
         email: profile.email ?? "",
-        telefon: profile.telefon ?? "",
+        telefon: formatPhoneInput(profile.telefon ?? ""),
       });
     }
   }, [profile, reset]);
@@ -78,25 +126,9 @@ export function AccountProfile() {
   if (!isHydrated || !user) return <ContentSkeleton />;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{LABELS.account}</h1>
-        <Button variant="outline" onClick={logout}>
-          {LABELS.logout}
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" asChild>
-          <Link href={ROUTES.orders}>{LABELS.orders}</Link>
-        </Button>
-        <Button variant="secondary" asChild>
-          <Link href={ROUTES.favorites}>{LABELS.favorites}</Link>
-        </Button>
-        <Button variant="secondary" asChild>
-          <Link href={ROUTES.addresses}>{LABELS.addresses}</Link>
-        </Button>
-      </div>
+    <AccountShell>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-foreground">{LABELS.account}</h1>
 
       <Card>
         <CardHeader>
@@ -123,7 +155,8 @@ export function AccountProfile() {
               </div>
               <div className="space-y-2">
                 <Label>{LABELS.phone}</Label>
-                <Input {...register("telefon")} />
+                <PhoneInput {...register("telefon")} />
+                {errors.telefon && <p className="text-sm text-destructive">{errors.telefon.message}</p>}
               </div>
               <Button type="submit" disabled={isSubmitting}>
                 {LABELS.save}
@@ -133,6 +166,7 @@ export function AccountProfile() {
         </CardContent>
       </Card>
     </div>
+    </AccountShell>
   );
 }
 
@@ -148,8 +182,9 @@ export function OrdersView() {
   if (!isHydrated) return <ContentSkeleton />;
 
   return (
+    <AccountShell>
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{LABELS.orders}</h1>
+      <h1 className="text-3xl font-bold text-foreground">{LABELS.orders}</h1>
       {orders.length === 0 ? (
         <p className="text-muted-foreground">{LABELS.emptyOrders}</p>
       ) : (
@@ -175,6 +210,7 @@ export function OrdersView() {
         </div>
       )}
     </div>
+    </AccountShell>
   );
 }
 
@@ -205,49 +241,43 @@ export function FavoritesView() {
     if (isHydrated && !user) router.push(ROUTES.login);
   }, [isHydrated, user, router]);
 
+  const { addProduct } = useAddToCart();
   const removeMutation = useMutation({
     mutationFn: accountService.removeFavorite,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
   });
 
-  if (!isHydrated || isLoading) return <ProductGridSkeleton count={4} />;
+  if (!isHydrated || !user) return <ProductGridSkeleton count={4} />;
 
   return (
+    <AccountShell>
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{LABELS.favorites}</h1>
-      {favoriteIds.length === 0 ? (
+      <h1 className="text-3xl font-bold text-foreground">{LABELS.favorites}</h1>
+      {isLoading ? (
+        <ProductGridSkeleton count={4} />
+      ) : favoriteIds.length === 0 ? (
         <p className="text-muted-foreground">{LABELS.emptyFavorites}</p>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
           {products.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
               isFavorite
+              onAddToCart={addProduct}
               onToggleFavorite={() => removeMutation.mutate(product.id)}
             />
           ))}
         </div>
       )}
     </div>
+    </AccountShell>
   );
 }
 
-const addressSchema = z.object({
-  baslik: z.string().min(2),
-  ad: z.string().min(2),
-  soyad: z.string().min(2),
-  telefon: z.string().min(10),
-  il: z.string().min(2),
-  ilce: z.string().min(2),
-  adresSatiri: z.string().min(5),
-  postaKodu: z.string().optional(),
-});
-
-type AddressForm = z.infer<typeof addressSchema>;
-
 export function AddressesView() {
   const router = useRouter();
+  const openAddress = useSidePanelStore((s) => s.openAddress);
   const { user, isHydrated } = useAuthStore();
   const queryClient = useQueryClient();
 
@@ -257,26 +287,9 @@ export function AddressesView() {
     enabled: !!user,
   });
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting },
-  } = useForm<AddressForm>({ resolver: zodResolver(addressSchema) });
-
   useEffect(() => {
     if (isHydrated && !user) router.push(ROUTES.login);
   }, [isHydrated, user, router]);
-
-  const saveMutation = useMutation({
-    mutationFn: accountService.saveAddress,
-    onSuccess: () => {
-      toast.success("Adres kaydedildi");
-      reset();
-      queryClient.invalidateQueries({ queryKey: ["addresses"] });
-    },
-    onError: (error) => toast.error(getApiErrorMessage(error)),
-  });
 
   const deleteMutation = useMutation({
     mutationFn: accountService.deleteAddress,
@@ -289,8 +302,12 @@ export function AddressesView() {
   if (!isHydrated) return <ContentSkeleton />;
 
   return (
+    <AccountShell>
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">{LABELS.addresses}</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold text-foreground">{LABELS.addresses}</h1>
+        <Button type="button" onClick={openAddress}>{LABELS.addAddress}</Button>
+      </div>
 
       {isLoading ? (
         <ContentSkeleton />
@@ -302,7 +319,7 @@ export function AddressesView() {
                 <div className="flex items-center justify-between">
                   <p className="font-medium">{addr.baslik}</p>
                   {addr.varsayilan && (
-                    <span className="text-xs text-primary">{LABELS.defaultAddress}</span>
+                    <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">{LABELS.defaultAddress}</span>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -323,52 +340,7 @@ export function AddressesView() {
           ))}
         </div>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{LABELS.addAddress}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={handleSubmit((data) =>
-              saveMutation.mutate({ ...data, firmaId: user?.firmaId }),
-            )}
-            className="grid gap-4 md:grid-cols-2"
-          >
-            <div className="space-y-2">
-              <Label>Başlık</Label>
-              <Input {...register("baslik")} placeholder="Ev, İş..." />
-            </div>
-            <div className="space-y-2">
-              <Label>{LABELS.phone}</Label>
-              <Input {...register("telefon")} />
-            </div>
-            <div className="space-y-2">
-              <Label>{LABELS.firstName}</Label>
-              <Input {...register("ad")} />
-            </div>
-            <div className="space-y-2">
-              <Label>{LABELS.lastName}</Label>
-              <Input {...register("soyad")} />
-            </div>
-            <div className="space-y-2">
-              <Label>{LABELS.city}</Label>
-              <Input {...register("il")} />
-            </div>
-            <div className="space-y-2">
-              <Label>{LABELS.district}</Label>
-              <Input {...register("ilce")} />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>{LABELS.address}</Label>
-              <Input {...register("adresSatiri")} />
-            </div>
-            <Button type="submit" disabled={isSubmitting}>
-              {LABELS.save}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
     </div>
+    </AccountShell>
   );
 }

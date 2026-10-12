@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { WhatsAppFab } from "@/components/layout/whatsapp-fab";
 import { StoreThemeProvider } from "@/themes/provider";
 import { getStoreConfig } from "@/modules/store/store.server";
-import { resolveFirmaId } from "@/config/env";
+import { resolveFirmaId } from "@/lib/tenant";
 import { storeService } from "@/services/store.service";
 import type { FirmaKategoriDto } from "@/types/api";
 
@@ -20,7 +22,7 @@ export async function StoreLayoutShell({
   fullWidth = false,
 }: StoreLayoutShellProps) {
   const params = searchParams ? await searchParams : undefined;
-  const firmaId = resolveFirmaId(params);
+  const firmaId = await resolveFirmaId(params);
   let config;
 
   try {
@@ -48,11 +50,14 @@ export async function StoreLayoutShell({
       }}
     >
       <div className="flex min-h-screen flex-col">
-        <SiteHeader config={config} categories={categories} />
+        <Suspense fallback={<div className="h-28 border-b border-border bg-card" />}>
+          <SiteHeader config={config} categories={categories} />
+        </Suspense>
         <main className={fullWidth ? "flex-1" : "container mx-auto flex-1 px-4 py-8"}>
           {children}
         </main>
         <SiteFooter config={config} />
+        <WhatsAppFab phone={config.ayarlar?.whatsappNo} storeName={config.firmaIsim} />
       </div>
     </StoreThemeProvider>
   );

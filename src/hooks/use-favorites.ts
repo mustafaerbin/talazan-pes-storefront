@@ -11,6 +11,13 @@ export function useFavoriteToggle() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const openFavorites = useSidePanelStore((s) => s.openFavorites);
+  const openLogin = useSidePanelStore((s) => s.openLogin);
+
+  const reportError = (error: unknown) => {
+    const message = getApiErrorMessage(error);
+    toast.error(message);
+    if (/oturumunuz sona erdi/i.test(message)) openLogin();
+  };
 
   const addMutation = useMutation({
     mutationFn: accountService.addFavorite,
@@ -18,7 +25,7 @@ export function useFavoriteToggle() {
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
       openFavorites();
     },
-    onError: (error) => toast.error(getApiErrorMessage(error)),
+    onError: reportError,
   });
 
   const removeMutation = useMutation({
@@ -26,7 +33,7 @@ export function useFavoriteToggle() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
     },
-    onError: (error) => toast.error(getApiErrorMessage(error)),
+    onError: reportError,
   });
 
   const toggle = (urunId: number, isFavorite?: boolean) => {

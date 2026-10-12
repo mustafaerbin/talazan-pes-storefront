@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { StoreLayoutShell } from "@/components/layout/store-layout-shell";
 import { ProductDetailView } from "@/modules/catalog/product-detail";
-import { resolveFirmaId } from "@/config/env";
+import { getRequestSiteUrl, resolveFirmaId } from "@/lib/tenant";
 import { getStoreConfig } from "@/modules/store/store.server";
 import { storeService } from "@/services/store.service";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -26,13 +26,13 @@ export async function generateMetadata({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId(sp);
   try {
     const [config, product] = await Promise.all([
       getStoreConfig(firmaId),
       storeService.getProductBySlug(firmaId, slug),
     ]);
-    return buildStoreMetadata(config, {
+    return await buildStoreMetadata(config, {
       title: product.isim,
       description: plainDescription(product.aciklama),
       path: `/urun/${slug}`,
@@ -51,7 +51,7 @@ export default async function ProductPage({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId(sp);
 
   let product;
   try {
@@ -68,9 +68,11 @@ export default async function ProductPage({
       ).items.filter((p) => p.id !== product.id)
     : [];
 
+  const siteUrl = await getRequestSiteUrl();
+
   return (
     <StoreLayoutShell searchParams={searchParams}>
-      <JsonLd data={buildProductJsonLd(product)} />
+      <JsonLd data={buildProductJsonLd(product, siteUrl)} />
       <ProductDetailView product={product} related={related} />
     </StoreLayoutShell>
   );

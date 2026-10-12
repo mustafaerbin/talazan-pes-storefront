@@ -2,7 +2,7 @@ import { StoreLayoutShell } from "@/components/layout/store-layout-shell";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ContentPage } from "@/modules/content/content-page";
 import { LABELS, PAGE_SLUGS, ROUTES } from "@/config/constants";
-import { resolveFirmaId } from "@/config/env";
+import { getRequestSiteUrl, resolveFirmaId } from "@/lib/tenant";
 import { getStoreConfig } from "@/modules/store/store.server";
 import { storeService } from "@/services/store.service";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -22,12 +22,12 @@ export async function generateMetadata({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const sp = await searchParams;
-  const firmaId = resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId(sp);
   const [config, page] = await Promise.all([
     getStoreConfig(firmaId).catch(() => null),
     getPageOrNull(firmaId, PAGE_SLUGS.about),
   ]);
-  return buildStoreMetadata(config, {
+  return await buildStoreMetadata(config, {
     title: page?.metaTitle ?? page?.baslik ?? LABELS.about,
     description: page?.metaDescription,
     path: ROUTES.about,
@@ -40,15 +40,16 @@ export default async function AboutPage({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const sp = await searchParams;
-  const firmaId = resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId(sp);
   const [config, page] = await Promise.all([
     getStoreConfig(firmaId).catch(() => null),
     getPageOrNull(firmaId, PAGE_SLUGS.about),
   ]);
+  const siteUrl = await getRequestSiteUrl();
 
   return (
     <StoreLayoutShell searchParams={searchParams}>
-      {page && config && <JsonLd data={buildWebPageJsonLd(page, config)} />}
+      {page && config && <JsonLd data={buildWebPageJsonLd(page, config, siteUrl)} />}
       <div className="mx-auto max-w-4xl space-y-6">
         <Breadcrumbs items={[{ label: LABELS.about }]} />
         {page ? (

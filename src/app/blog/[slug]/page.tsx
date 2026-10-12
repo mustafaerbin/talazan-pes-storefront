@@ -3,7 +3,7 @@ import { StoreLayoutShell } from "@/components/layout/store-layout-shell";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ContentPage } from "@/modules/content/content-page";
 import { LABELS, PAGE_SLUGS, ROUTES } from "@/config/constants";
-import { resolveFirmaId } from "@/config/env";
+import { getRequestSiteUrl, resolveFirmaId } from "@/lib/tenant";
 import { getStoreConfig } from "@/modules/store/store.server";
 import { storeService } from "@/services/store.service";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -51,11 +51,11 @@ export async function generateMetadata({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId(sp);
   const posts = await getBlogPosts(firmaId);
   const post = findBlogPost(posts, slug);
   const config = await getStoreConfig(firmaId).catch(() => null);
-  return buildStoreMetadata(config, {
+  return await buildStoreMetadata(config, {
     title: post?.baslik ?? slug,
     path: ROUTES.blogPost(slug),
   });
@@ -69,7 +69,7 @@ export default async function BlogPostPage({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId(sp);
   const posts = await getBlogPosts(firmaId);
   const post = findBlogPost(posts, slug);
 
@@ -81,10 +81,11 @@ export default async function BlogPostPage({
     baslik: post.baslik,
     icerik: post.icerik ?? `<p>${post.ozet ?? ""}</p>`,
   };
+  const siteUrl = await getRequestSiteUrl();
 
   return (
     <StoreLayoutShell searchParams={searchParams}>
-      {config && <JsonLd data={buildWebPageJsonLd(pageContent, config)} />}
+      {config && <JsonLd data={buildWebPageJsonLd(pageContent, config, siteUrl)} />}
       <div className="mx-auto max-w-3xl space-y-6">
         <Breadcrumbs
           items={[

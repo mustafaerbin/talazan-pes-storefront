@@ -23,7 +23,7 @@ export function SectionHeader({
   return (
     <div className={cn("flex items-end justify-between gap-4", className)}>
       <div className="space-y-2">
-        <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl lg:text-4xl">{title}</h2>
+        <h2 className="text-xl font-bold tracking-tight md:text-2xl">{title}</h2>
         {subtitle && <p className="text-base text-muted-foreground">{subtitle}</p>}
       </div>
       {href && (

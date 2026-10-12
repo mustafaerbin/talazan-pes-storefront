@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { ROUTES } from "@/config/constants";
 import type { FirmaKategoriDto } from "@/types/api";
@@ -14,43 +12,37 @@ interface CategoryGridProps {
 }
 
 export function CategoryGrid({ categories, title, subtitle }: CategoryGridProps) {
-  if (!categories.length) return null;
+  const visible = categories.filter((category) => !category.parent).slice(0, 8);
+  if (!visible.length) return null;
+  const columns =
+    visible.length <= 2
+      ? "grid-cols-2"
+      : visible.length <= 4
+        ? "grid-cols-2 sm:grid-cols-4"
+        : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-4">
       {(title || subtitle) && (
-        <div className="space-y-2">
-          {title && (
-            <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl lg:text-4xl">{title}</h2>
-          )}
-          {subtitle && <p className="text-base text-muted-foreground">{subtitle}</p>}
+        <div>
+          {title && <h2 className="text-xl font-bold tracking-tight md:text-2xl">{title}</h2>}
+          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-        {categories.slice(0, 12).map((category, index) => {
+      <div className={`grid gap-3 ${columns}`}>
+        {visible.map((category) => {
           const Icon = getCategoryIcon(category.isim);
           return (
-            <motion.div
+            <Link
               key={category.id}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.04, duration: 0.35 }}
+              href={ROUTES.category(category.slug ?? String(category.id))}
+              className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/30"
             >
-              <Link
-                href={ROUTES.category(category.slug ?? String(category.id))}
-                className="group flex h-full flex-col items-center rounded-[var(--radius-card)] border border-border bg-card p-6 text-center shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:bg-secondary/40 hover:shadow-hover"
-              >
-                <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-secondary text-primary transition-all duration-300 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-card">
-                  <Icon className="size-7" />
-                </div>
-                <span className="line-clamp-2 text-sm font-bold leading-snug">{category.isim}</span>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
-                  Keşfet
-                  <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </Link>
-            </motion.div>
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
+                <Icon className="size-5" />
+              </span>
+              <span className="line-clamp-2 text-sm font-semibold leading-snug">{category.isim}</span>
+            </Link>
           );
         })}
       </div>

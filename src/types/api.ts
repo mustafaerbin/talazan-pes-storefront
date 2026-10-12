@@ -38,6 +38,8 @@ export interface FirmaWebsiteAyarDto {
   linkedinUrl?: string;
   whatsappNo?: string;
   mevcutKategorileriKullan?: string;
+  vitrinKategoriKaynagi?: string;
+  vitrinPlatform?: string;
 }
 
 export interface SiteHeaderDto {
@@ -90,6 +92,8 @@ export interface StoreConfigDto {
   footer?: SiteFooterDto;
   seo?: SiteSeoDto;
   menuler?: SiteMenuDto[];
+  ucretsizKargoLimiti?: number;
+  kargoUcreti?: number;
 }
 
 export interface FirmaKategoriDto {
@@ -136,6 +140,7 @@ export interface FirmaUrunDto {
   beden?: string;
   renk?: string;
   varyantBilgisi?: string;
+  varyantOzellikleri?: { ozellikIsim?: string; degerIsim?: string }[];
 }
 
 export interface SiteSayfaDto {
@@ -213,6 +218,7 @@ export interface FirmaSiparisUrunDto {
   barkodNo?: string;
   resim?: string;
   kdvOrani?: number;
+  varyantBilgisi?: string;
 }
 
 export interface FirmaSiparisAdresDto {
@@ -229,6 +235,7 @@ export interface FirmaSiparisAdresDto {
   mail?: string;
   telefon?: string;
   adresTipi?: string;
+  vergiDairesi?: string;
 }
 
 export interface FirmaSiparisDto {
@@ -252,6 +259,12 @@ export interface FirmaSiparisDto {
   platform?: string;
   firmaSiparisUrunDtoList?: FirmaSiparisUrunDto[];
   adresBilgileri?: FirmaSiparisAdresDto;
+  faturaAdresi?: FirmaSiparisAdresDto;
+  odemeYontemi?: string;
+  istemAnahtari?: string;
+  faturaTipi?: string;
+  sirketUnvani?: string;
+  vergiNo?: string;
 }
 
 export interface ProductFilters {
@@ -277,6 +290,44 @@ export interface CartItem {
   listeTutari?: number;
   renk?: string;
   beden?: string;
+}
+
+export interface StoreSiparisKalemDto {
+  firmaUrunId?: number;
+  urunIsim?: string;
+  varyantBilgisi?: string;
+  resim?: string;
+  adet?: number;
+  birimFiyat?: number;
+  tutar?: number;
+  indirimTutar?: number;
+}
+
+export interface StoreSiparisSonucDto {
+  id?: number;
+  siparisNo?: string;
+  siparisDurum?: string;
+  odemeYontemi?: string;
+  odemeDurum?: string;
+  odendi?: boolean;
+  araToplam?: number;
+  indirimTutar?: number;
+  sepetKampanyaIndirimTutar?: number;
+  kargoTutar?: number;
+  toplam?: number;
+  ucretsizKargoLimiti?: number;
+  standartKargoUcreti?: number;
+  ucretsizKargo?: boolean;
+  takipToken?: string;
+  musteriAdi?: string;
+  musteriSoyadi?: string;
+  email?: string;
+  telefon?: string;
+  teslimatAdres?: string;
+  faturaAdres?: string;
+  fiyatGuncellendi?: boolean;
+  uyari?: string;
+  kalemler?: StoreSiparisKalemDto[];
 }
 
 export interface LocalOrder {

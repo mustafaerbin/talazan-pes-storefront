@@ -4,7 +4,7 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ContentPage } from "@/modules/content/content-page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LABELS, PAGE_SLUGS, ROUTES } from "@/config/constants";
-import { resolveFirmaId } from "@/config/env";
+import { resolveFirmaId } from "@/lib/tenant";
 import { getStoreConfig } from "@/modules/store/store.server";
 import { storeService } from "@/services/store.service";
 import { buildStoreMetadata } from "@/utils/seo";
@@ -46,8 +46,8 @@ export async function generateMetadata({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const sp = await searchParams;
-  const config = await getStoreConfig(resolveFirmaId(sp)).catch(() => null);
-  return buildStoreMetadata(config, { title: LABELS.blog, path: ROUTES.blog });
+  const config = await getStoreConfig(await resolveFirmaId(sp)).catch(() => null);
+  return await buildStoreMetadata(config, { title: LABELS.blog, path: ROUTES.blog });
 }
 
 export default async function BlogPage({
@@ -56,7 +56,7 @@ export default async function BlogPage({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const sp = await searchParams;
-  const firmaId = resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId(sp);
   let page = null;
   try {
     page = await storeService.getPage(firmaId, PAGE_SLUGS.blog);

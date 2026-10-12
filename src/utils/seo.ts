@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import type { FirmaUrunDto, SiteSayfaDto, StoreConfigDto } from "@/types/api";
 import { env } from "@/config/env";
+import { getRequestSiteUrl } from "@/lib/tenant";
 
-export function buildStoreMetadata(
+async function resolveSiteBase(siteUrl?: string): Promise<string> {
+  return siteUrl ?? (await getRequestSiteUrl());
+}
+
+export async function buildStoreMetadata(
   config: StoreConfigDto | null,
   overrides?: {
     title?: string;
@@ -11,28 +16,22 @@ export function buildStoreMetadata(
     image?: string;
     noIndex?: boolean;
   },
-): Metadata {
+  siteUrl?: string,
+): Promise<Metadata> {
+  const base = await resolveSiteBase(siteUrl);
   const seo = config?.seo;
   const ayarlar = config?.ayarlar;
   const title = overrides?.title ?? seo?.metaTitle ?? ayarlar?.siteBaslik ?? config?.firmaIsim ?? "Talazan Mağaza";
   const description =
     overrides?.description ?? seo?.metaDescription ?? ayarlar?.siteAciklama ?? "Premium e-ticaret mağazası";
-  const url = `${env.siteUrl}${overrides?.path ?? ""}`;
+  const url = `${base}${overrides?.path ?? ""}`;
   const image = overrides?.image ?? seo?.ogImageUrl ?? ayarlar?.logoUrl;
-  const favicon = ayarlar?.faviconUrl;
 
   return {
     title,
     description,
     keywords: seo?.metaKeywords?.split(",").map((k) => k.trim()),
-    metadataBase: new URL(env.siteUrl),
-    icons: favicon
-      ? {
-          icon: favicon,
-          shortcut: favicon,
-          apple: favicon,
-        }
-      : undefined,
+    metadataBase: new URL(base),
     alternates: {
       canonical: seo?.canonicalUrl ?? url,
     },
@@ -58,7 +57,8 @@ export function buildStoreMetadata(
   };
 }
 
-export function buildProductJsonLd(product: FirmaUrunDto) {
+export function buildProductJsonLd(product: FirmaUrunDto, siteUrl?: string) {
+  const base = siteUrl ?? env.siteUrl;
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -77,17 +77,18 @@ export function buildProductJsonLd(product: FirmaUrunDto) {
         (product.stokMiktari ?? 0) > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
-      url: `${env.siteUrl}/urun/${product.slug ?? product.id}`,
+      url: `${base}/urun/${product.slug ?? product.id}`,
     },
   };
 }
 
-export function buildOrganizationJsonLd(config: StoreConfigDto) {
+export function buildOrganizationJsonLd(config: StoreConfigDto, siteUrl?: string) {
+  const base = siteUrl ?? env.siteUrl;
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: config.firmaIsim,
-    url: env.siteUrl,
+    url: base,
     logo: config.ayarlar?.logoUrl,
     contactPoint: config.ayarlar?.iletisimTelefon
       ? {
@@ -113,17 +114,18 @@ export function buildBreadcrumbJsonLd(items: { name: string; item?: string }[]) 
   };
 }
 
-export function buildWebPageJsonLd(page: SiteSayfaDto, config: StoreConfigDto) {
+export function buildWebPageJsonLd(page: SiteSayfaDto, config: StoreConfigDto, siteUrl?: string) {
+  const base = siteUrl ?? env.siteUrl;
   return {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: page.baslik,
     description: page.metaDescription,
-    url: `${env.siteUrl}/${page.slug}`,
+    url: `${base}/${page.slug}`,
     isPartOf: {
       "@type": "WebSite",
       name: config.firmaIsim,
-      url: env.siteUrl,
+      url: base,
     },
   };
 }

@@ -1,30 +1,52 @@
 "use client";
 
+import { FormEvent, useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ProductCard } from "@/components/product/product-card";
+import { Search } from "lucide-react";
+import { CategoryTreeNav } from "@/components/catalog/category-tree-nav";
+import { InfiniteProductGrid } from "@/components/catalog/infinite-product-grid";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ProductGridSkeleton } from "@/components/ui/skeleton-loaders";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { DEFAULT_PAGE_SIZE, LABELS, SORT_OPTIONS } from "@/config/constants";
+import Link from "next/link";
+import { DEFAULT_PAGE_SIZE, LABELS, ROUTES, SORT_OPTIONS } from "@/config/constants";
 import { useFirmaId } from "@/hooks/use-firma-id";
 import { useAddToCart } from "@/hooks/use-add-to-cart";
+import { useInfiniteProducts, type ProductListMode } from "@/hooks/use-infinite-products";
+import { ancestorPath, buildCategoryIndex, childCategories, withListingQuery } from "@/lib/category-tree";
 import { storeService } from "@/services/store.service";
-import type { ProductFilters } from "@/types/api";
+import type { FirmaKategoriDto, ProductFilters } from "@/types/api";
 
 interface ProductListingProps {
   initialFilters?: ProductFilters;
+  initialCategories?: FirmaKategoriDto[];
   title?: string;
 }
 
-export function ProductListing({ initialFilters = {}, title }: ProductListingProps) {
+export function ProductListing({ initialFilters = {}, initialCategories, title }: ProductListingProps) {
   const firmaId = useFirmaId();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addProduct } = useAddToCart();
 
-  const filters: ProductFilters = {
+  const liste = searchParams.get("liste");
+  const showBrands = liste === "markalar";
+  const pageTitle =
+    liste === "yeni"
+      ? LABELS.newArrivals
+      : liste === "cok-satan"
+        ? LABELS.bestSellers
+        : liste === "indirimli"
+          ? LABELS.discountedProducts
+          : liste === "markalar"
+            ? LABELS.brands
+            : title;
+
+  const listMode: ProductListMode =
+    liste === "indirimli" ? "discounted" : liste === "yeni" ? "newest" : "default";
+
+  const filters: Omit<ProductFilters, "page"> = {
     ...initialFilters,
     arama: searchParams.get("q") ?? initialFilters.arama,
     kategoriId: searchParams.get("kategoriId")
@@ -33,7 +55,10 @@ export function ProductListing({ initialFilters = {}, title }: ProductListingPro
     markaId: searchParams.get("markaId")
       ? Number(searchParams.get("markaId"))
       : initialFilters.markaId,
-    siralama: searchParams.get("siralama") ?? initialFilters.siralama ?? "satisTutari,desc",
+    siralama:
+      liste === "yeni"
+        ? "id,desc"
+        : (searchParams.get("siralama") ?? initialFilters.siralama ?? "satisTutari,desc"),
     stoktaVar: searchParams.get("stoktaVar") === "true" ? true : initialFilters.stoktaVar,
     minFiyat: searchParams.get("minFiyat")
       ? Number(searchParams.get("minFiyat"))
@@ -41,14 +66,43 @@ export function ProductListing({ initialFilters = {}, title }: ProductListingPro
     maxFiyat: searchParams.get("maxFiyat")
       ? Number(searchParams.get("maxFiyat"))
       : initialFilters.maxFiyat,
-    page: searchParams.get("page") ? Number(searchParams.get("page")) : 0,
     size: DEFAULT_PAGE_SIZE,
   };
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["products", firmaId, filters],
-    queryFn: () => storeService.getProducts(firmaId, filters),
+  const productsQuery = useInfiniteProducts(firmaId, filters, {
+    mode: listMode,
+    enabled: !showBrands,
   });
+
+  const loadMore = useCallback(() => {
+    if (!productsQuery.hasNextPage || productsQuery.isFetching) return;
+    void productsQuery.fetchNextPage();
+  }, [productsQuery.hasNextPage, productsQuery.isFetching, productsQuery.fetchNextPage]);
+
+  const { data: brands = [], isLoading: brandsLoading } = useQuery({
+    queryKey: ["brands", firmaId],
+    queryFn: () => storeService.getBrands(firmaId),
+    enabled: showBrands,
+  });
+
+  const products = productsQuery.products;
+  const [searchText, setSearchText] = useState(searchParams.get("q") ?? "");
+
+  const {
+    data: categories = [],
+    isLoading: categoriesLoading,
+    isError: categoriesError,
+  } = useQuery({
+    queryKey: ["categories", firmaId],
+    queryFn: () => storeService.getCategories(firmaId),
+    enabled: !showBrands,
+    initialData: initialCategories,
+    staleTime: 5 * 60 * 1000,
+  });
+  const categoryIndex = useMemo(() => buildCategoryIndex(categories), [categories]);
+  const activeCategory = filters.kategoriId != null ? categoryIndex.byId.get(filters.kategoriId) : undefined;
+  const categoryCrumbs = activeCategory ? ancestorPath(activeCategory.id, categoryIndex) : [];
+  const subcategories = activeCategory ? childCategories(categoryIndex, activeCategory.id) : [];
 
   const updateParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -58,88 +112,155 @@ export function ProductListing({ initialFilters = {}, title }: ProductListingPro
     router.push(`?${params.toString()}`);
   };
 
+  const submitSearch = (event: FormEvent) => {
+    event.preventDefault();
+    updateParam("q", searchText.trim());
+  };
+
   return (
     <div className="space-y-8">
-      {title && <h1 className="text-3xl font-bold tracking-tight">{title}</h1>}
+      {showBrands && pageTitle && <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>}
 
-      <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
-        <aside className="space-y-6 rounded-2xl border border-border/60 p-5">
-          <h2 className="font-semibold">{LABELS.filters}</h2>
-          <div className="space-y-2">
-            <Label htmlFor="minFiyat">{LABELS.priceRange}</Label>
-            <div className="flex gap-2">
+      {showBrands ? (
+        brandsLoading ? (
+          <ProductGridSkeleton />
+        ) : brands.length === 0 ? (
+          <p className="py-12 text-center text-muted-foreground">{LABELS.noResults}</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {brands.map((brand) => (
+              <Link
+                key={brand.id}
+                href={`${ROUTES.search}?markaId=${brand.id}`}
+                className="rounded-[var(--radius-card)] border border-border bg-card px-5 py-6 text-center text-sm font-bold shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:text-primary hover:shadow-hover"
+              >
+                {brand.isim}
+              </Link>
+            ))}
+          </div>
+        )
+      ) : (
+      <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <CategoryTreeNav
+          categories={categories}
+          activeId={filters.kategoriId}
+          isLoading={categoriesLoading}
+          isError={categoriesError}
+        />
+
+        <div className="min-w-0 space-y-5">
+          {categoryCrumbs.length > 0 && (
+            <Breadcrumbs
+              items={categoryCrumbs.map((category, index) => ({
+                label: category.isim,
+                href:
+                  index < categoryCrumbs.length - 1
+                    ? withListingQuery(ROUTES.category(category.slug || String(category.id)), searchParams)
+                    : undefined,
+              }))}
+            />
+          )}
+          {pageTitle && <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{pageTitle}</h1>}
+          {subcategories.length > 0 && (
+            <ul className="flex max-h-48 flex-wrap gap-2 overflow-y-auto">
+              {subcategories.map((category) => (
+                <li key={category.id}>
+                  <Link
+                    href={withListingQuery(ROUTES.category(category.slug || String(category.id)), searchParams)}
+                    title={category.isim}
+                    className="inline-flex max-w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground hover:text-primary"
+                  >
+                    <span className="truncate">{category.isim}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-3 shadow-card lg:flex-row lg:items-center">
+            <form onSubmit={submitSearch} className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                id="minFiyat"
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+                placeholder={LABELS.searchPlaceholder}
+                aria-label={LABELS.searchPlaceholder}
+                className="h-10 pl-9"
+              />
+            </form>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
                 type="number"
                 placeholder="Min"
+                aria-label={LABELS.priceRange}
+                className="h-10 w-24"
                 defaultValue={filters.minFiyat}
-                onBlur={(e) => updateParam("minFiyat", e.target.value)}
+                onBlur={(event) => updateParam("minFiyat", event.target.value)}
               />
               <Input
                 type="number"
                 placeholder="Max"
+                aria-label={LABELS.priceRange}
+                className="h-10 w-24"
                 defaultValue={filters.maxFiyat}
-                onBlur={(e) => updateParam("maxFiyat", e.target.value)}
+                onBlur={(event) => updateParam("maxFiyat", event.target.value)}
               />
+              <select
+                aria-label={LABELS.sortBy}
+                className="h-10 rounded-[var(--radius-input)] border border-input bg-background px-3 text-sm"
+                defaultValue={filters.siralama}
+                onChange={(event) => updateParam("siralama", event.target.value)}
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={filters.stoktaVar === true}
+                onClick={() => updateParam("stoktaVar", filters.stoktaVar ? "" : "true")}
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-background px-3 text-sm font-medium"
+              >
+                <span
+                  className={`relative h-5 w-9 rounded-full transition-colors ${
+                    filters.stoktaVar ? "bg-primary" : "bg-secondary"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 size-4 rounded-full bg-white shadow-card transition-transform ${
+                      filters.stoktaVar ? "translate-x-4" : "translate-x-0.5"
+                    }`}
+                  />
+                </span>
+                {LABELS.inStockOnly}
+              </button>
             </div>
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              defaultChecked={filters.stoktaVar}
-              onChange={(e) => updateParam("stoktaVar", e.target.checked ? "true" : "")}
-            />
-            {LABELS.onlyInStock}
-          </label>
-          <div className="space-y-2">
-            <Label htmlFor="siralama">{LABELS.sortBy}</Label>
-            <select
-              id="siralama"
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              defaultValue={filters.siralama}
-              onChange={(e) => updateParam("siralama", e.target.value)}
-            >
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </aside>
 
-        <div className="space-y-6">
-          {data?.pageInfo && (
-            <p className="text-sm text-muted-foreground">
-              {data.pageInfo.totalElements} {LABELS.results}
-            </p>
-          )}
+          {!productsQuery.isLoading &&
+            (listMode === "default" ? productsQuery.totalElements != null : true) && (
+              <p className="text-sm font-medium text-muted-foreground">
+                {listMode === "default" ? (productsQuery.totalElements ?? 0) : products.length}{" "}
+                {LABELS.results}
+              </p>
+            )}
 
-          {isLoading && <ProductGridSkeleton />}
-          {isError && (
-            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center">
-              <p>{LABELS.error}</p>
-              <Button className="mt-4" onClick={() => refetch()}>
-                {LABELS.retry}
-              </Button>
-            </div>
-          )}
-          {!isLoading && !isError && data?.items.length === 0 && (
-            <p className="py-12 text-center text-muted-foreground">{LABELS.noResults}</p>
-          )}
-          {!isLoading && data && data.items.length > 0 && (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:gap-6">
-              {data.items.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={(p) => addProduct(p)}
-                />
-              ))}
-            </div>
-          )}
+          <InfiniteProductGrid
+            products={products}
+            isLoading={productsQuery.isLoading}
+            isError={productsQuery.isError}
+            isFetchingNextPage={productsQuery.isFetchingNextPage}
+            hasNextPage={productsQuery.hasNextPage}
+            onLoadMore={loadMore}
+            onRetry={() => void productsQuery.refetch()}
+            onAddToCart={(product) => addProduct(product)}
+          />
         </div>
       </div>
+      )}
     </div>
   );
 }

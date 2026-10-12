@@ -2,19 +2,22 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { env, resolveFirmaId } from "@/config/env";
+import { useTenantContext } from "@/providers/firma-id-provider";
 
 export function useFirmaId(): number {
+  const { firmaId: contextFirmaId } = useTenantContext();
   const searchParams = useSearchParams();
   return useMemo(() => {
-    const param = searchParams.get("firmaId");
-    if (param && !Number.isNaN(Number(param))) {
-      return Number(param);
+    if (process.env.NODE_ENV === "development") {
+      const param = searchParams.get("firmaId");
+      if (param && !Number.isNaN(Number(param))) {
+        return Number(param);
+      }
     }
-    return env.firmaId;
-  }, [searchParams]);
+    return contextFirmaId;
+  }, [contextFirmaId, searchParams]);
 }
 
-export function useFirmaIdFromServer(searchParams?: { firmaId?: string | string[] }): number {
-  return resolveFirmaId(searchParams);
+export function useSiteUrl(): string {
+  return useTenantContext().siteUrl;
 }

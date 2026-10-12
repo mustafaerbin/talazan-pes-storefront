@@ -5,11 +5,13 @@ import Link from "next/link";
 import { Minus, Plus, Share2, ShoppingCart, Trash2, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LABELS, ROUTES } from "@/config/constants";
+import { useQuery } from "@tanstack/react-query";
 import { useCartStore } from "@/hooks/use-cart-store";
+import { useFirmaId } from "@/hooks/use-firma-id";
+import { storeService } from "@/services/store.service";
+import { shippingMessage } from "@/lib/shipping";
 import { formatPrice } from "@/lib/utils";
 import type { CartItem } from "@/types/api";
-
-const FREE_SHIPPING_THRESHOLD = 1500;
 
 interface CartDrawerBodyProps {
   onClose: () => void;
@@ -28,8 +30,14 @@ export function CartDrawerBody({ onClose }: CartDrawerBodyProps) {
   const removeItem = useCartStore((s) => s.removeItem);
   const itemCount = items.reduce((sum, i) => sum + i.adet, 0);
   const subtotal = items.reduce((sum, i) => sum + i.birimFiyat * i.adet, 0);
-  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const freeShippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const firmaId = useFirmaId();
+  const { data: config } = useQuery({
+    queryKey: ["store-config", firmaId],
+    queryFn: () => storeService.getConfig(firmaId),
+  });
+  const standardFee = config?.kargoUcreti ?? 0;
+  const threshold = config?.ucretsizKargoLimiti ?? 0;
+  const freeShippingProgress = threshold > 0 ? Math.min(100, (subtotal / threshold) * 100) : 100;
 
   const handleShare = async () => {
     const url = `${window.location.origin}${ROUTES.cart}`;
@@ -111,7 +119,7 @@ export function CartDrawerBody({ onClose }: CartDrawerBodyProps) {
                       className="relative size-[72px] shrink-0 overflow-hidden rounded-xl bg-secondary"
                     >
                       {item.resim ? (
-                        <Image src={item.resim} alt={item.isim} fill className="object-cover" />
+                        <Image src={item.resim} alt={item.isim} fill sizes="72px" className="object-cover" />
                       ) : null}
                       {hasDiscount && (
                         <span className="absolute bottom-1 left-1 rounded-full bg-destructive px-1.5 py-0.5 text-[9px] font-bold text-white">
@@ -192,13 +200,13 @@ export function CartDrawerBody({ onClose }: CartDrawerBodyProps) {
           <div className="border-b border-primary/15 bg-primary/5 px-5 py-3">
             <p className="flex items-center gap-2 text-xs font-medium text-foreground/80">
               <Truck className="size-4 text-primary" />
-              {remainingForFreeShipping > 0
-                ? `${formatPrice(remainingForFreeShipping)} daha ekleyin, kargo bedava`
-                : "Kargonuz ücretsiz"}
+              {shippingMessage(subtotal, threshold, standardFee)}
             </p>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-primary/15">
-              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${freeShippingProgress}%` }} />
-            </div>
+            {threshold > 0 && (
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-primary/15">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${freeShippingProgress}%` }} />
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3 px-5 py-4">
             <div className="relative flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">

@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { HeroSection } from "@/components/home/hero-section";
 import { CategoryGrid } from "@/components/home/category-grid";
-import { ProductCarousel } from "@/components/home/product-carousel";
 import { PromotionBanner } from "@/components/home/promotion-banner";
 import { FeaturesSection } from "@/components/home/features-section";
 import { NewsletterSection } from "@/components/home/newsletter-section";
-import { ProductCard } from "@/components/product/product-card";
 import { SectionHeader } from "@/components/home/section-header";
+import { ProductCard } from "@/components/product/product-card";
 import { ProductGridSkeleton } from "@/components/ui/skeleton-loaders";
 import { LABELS, ROUTES } from "@/config/constants";
 import { useAddToCart } from "@/hooks/use-add-to-cart";
@@ -24,12 +23,45 @@ import type {
 } from "@/types/api";
 
 interface HomeSectionsProps {
+  firmaId: number;
   config: StoreConfigDto;
   sections: HomeSection[];
   productPools: HomeProductPools;
   categories: FirmaKategoriDto[];
   brands: FirmaMarkaDto[];
   loading?: boolean;
+}
+
+function HomeProductFeed({
+  title,
+  subtitle,
+  viewAllHref,
+  products,
+  loading = false,
+}: {
+  title: string;
+  subtitle?: string;
+  viewAllHref: string;
+  products: FirmaUrunDto[];
+  loading?: boolean;
+}) {
+  const { addProduct } = useAddToCart();
+  if (!loading && products.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <SectionHeader title={title} subtitle={subtitle} href={viewAllHref} />
+      {loading ? (
+        <ProductGridSkeleton count={4} />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} onAddToCart={addProduct} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
 function resolveProducts(
@@ -57,10 +89,12 @@ function mapSourceToPoolKey(source: ProductCarouselSource): keyof HomeProductPoo
 function viewAllForSource(source?: ProductCarouselSource): string {
   switch (source) {
     case "new_arrivals":
-      return `${ROUTES.search}?sort=id,desc`;
+      return ROUTES.catalog("yeni");
+    case "best_sellers":
+      return ROUTES.catalog("cok-satan");
     case "discounted":
     case "flash_sale":
-      return `${ROUTES.search}?indirimli=true`;
+      return ROUTES.catalog("indirimli");
     default:
       return ROUTES.search;
   }
@@ -74,14 +108,8 @@ export function HomeSections({
   brands,
   loading,
 }: HomeSectionsProps) {
-  const { addProduct } = useAddToCart();
-
-  const handleAddToCart = (product: FirmaUrunDto) => {
-    addProduct(product);
-  };
-
   return (
-    <div className="space-y-16 pb-12 md:space-y-20">
+    <div className="space-y-10 pb-8 md:space-y-12">
       {sections
         .filter((section) => section.aktif)
         .map((section) => {
@@ -101,17 +129,14 @@ export function HomeSections({
             case "product_carousel": {
               const source = section.ayarlar?.source ?? "featured";
               const limit = Number(section.ayarlar?.limit ?? 12);
-              const products = resolveProducts(source, productPools, limit);
               return (
-                <ProductCarousel
+                <HomeProductFeed
                   key={section.id}
                   title={section.baslik ?? LABELS.featuredProducts}
                   subtitle={section.altBaslik}
-                  products={products}
                   viewAllHref={viewAllForSource(source)}
+                  products={resolveProducts(source, productPools, limit)}
                   loading={loading}
-                  onAddToCart={handleAddToCart}
-                  variant={source === "flash_sale" ? "flash" : "default"}
                 />
               );
             }
@@ -132,7 +157,7 @@ export function HomeSections({
                   <SectionHeader
                     title={section.baslik ?? LABELS.brands}
                     subtitle={section.altBaslik}
-                    href={ROUTES.search}
+                    href={ROUTES.catalog("markalar")}
                   />
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                     {brands.map((brand) => (
@@ -150,7 +175,9 @@ export function HomeSections({
 
             case "banner":
             case "promotion": {
-              const promotions = (section.ayarlar?.promotions ?? []) as PromotionCard[];
+              const promotions = ((section.ayarlar?.promotions ?? []) as PromotionCard[]).filter(
+                (item) => item.resimUrl,
+              );
               return promotions.length ? (
                 <PromotionBanner key={section.id} promotions={promotions} />
               ) : null;
@@ -173,26 +200,14 @@ export function HomeSections({
           }
         })}
 
-      {!sections.some((s) => s.aktif && (s.type === "featured" || s.type === "product_carousel")) &&
-        productPools.featured.length > 0 && (
-          <section className="space-y-6">
-            <SectionHeader title={LABELS.featuredProducts} href={ROUTES.search} />
-            {loading ? (
-              <ProductGridSkeleton count={4} />
-            ) : (
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
-                {productPools.featured.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onAddToCart={handleAddToCart}
-                    showQuickActions
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        )}
+      {!sections.some((s) => s.aktif && (s.type === "featured" || s.type === "product_carousel")) && (
+        <HomeProductFeed
+          title={LABELS.featuredProducts}
+          viewAllHref={ROUTES.search}
+          products={productPools.featured.slice(0, 8)}
+          loading={loading}
+        />
+      )}
     </div>
   );
 }

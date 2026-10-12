@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
+import { LABELS } from "@/config/constants";
 import { cn } from "@/lib/utils";
 
 export interface BreadcrumbItem {
@@ -14,9 +15,10 @@ interface BreadcrumbsProps {
 
 export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   return (
-    <nav aria-label="Breadcrumb" className={cn("flex items-center gap-1 text-sm text-muted-foreground", className)}>
-      <Link href="/" className="inline-flex items-center hover:text-foreground">
+    <nav aria-label="Breadcrumb" className={cn("flex flex-wrap items-center gap-1 text-sm text-muted-foreground", className)}>
+      <Link href="/" className="inline-flex items-center gap-1 hover:text-foreground">
         <Home className="size-4" />
+        <span>{LABELS.home}</span>
       </Link>
       {items.map((item, index) => (
         <span key={`${item.label}-${index}`} className="inline-flex items-center gap-1">

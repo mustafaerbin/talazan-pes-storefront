@@ -49,7 +49,7 @@ export function getReviewSummary(reviews: ProductReviewItem[]) {
   let sum = 0;
   for (const r of reviews) {
     const idx = Math.min(5, Math.max(1, Math.round(r.rating))) - 1;
-    distribution[idx]++;
+    distribution[idx] = (distribution[idx] ?? 0) + 1;
     sum += r.rating;
   }
   return {

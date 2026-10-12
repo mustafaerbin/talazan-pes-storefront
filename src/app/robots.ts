@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
-import { env } from "@/config/env";
+import { getRequestSiteUrl } from "@/lib/tenant";
 import { getStoreConfig } from "@/modules/store/store.server";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
+  const siteUrl = await getRequestSiteUrl();
   let robotsTxt: string | undefined;
   try {
-    const config = await getStoreConfig(env.firmaId);
+    const config = await getStoreConfig();
     robotsTxt = config.seo?.robotsTxt;
   } catch {
     // default
@@ -24,7 +25,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         allow: "/",
         disallow: disallow.length > 0 ? disallow : ["/hesabim", "/giris", "/kayit", "/odeme"],
       },
-      sitemap: `${env.siteUrl}/sitemap.xml`,
+      sitemap: `${siteUrl}/sitemap.xml`,
     };
   }
 
@@ -34,6 +35,6 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       allow: "/",
       disallow: ["/hesabim", "/giris", "/kayit", "/odeme", "/adresler", "/favoriler", "/siparisler"],
     },
-    sitemap: `${env.siteUrl}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

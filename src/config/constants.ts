@@ -3,6 +3,7 @@ export const ROUTES = {
   search: "/ara",
   cart: "/sepet",
   checkout: "/odeme",
+  orderConfirmation: "/siparis-onay",
   login: "/giris",
   register: "/kayit",
   account: "/hesabim",
@@ -18,6 +19,7 @@ export const ROUTES = {
   category: (slug: string) => `/kategori/${slug}`,
   product: (slug: string) => `/urun/${slug}`,
   blogPost: (slug: string) => `/blog/${slug}`,
+  catalog: (liste: "yeni" | "cok-satan" | "indirimli" | "markalar") => `/ara?liste=${liste}`,
 } as const;
 
 export const LABELS = {
@@ -64,6 +66,8 @@ export const LABELS = {
   viewAll: "Tümünü Gör",
   featuredProducts: "Öne Çıkan Ürünler",
   categories: "Kategoriler",
+  allProducts: "Tüm Ürünler",
+  inStockOnly: "Yalnız stoktakiler",
   brands: "Markalar",
   newArrivals: "Yeni Gelenler",
   bestSellers: "Çok Satanlar",
@@ -75,9 +79,13 @@ export const LABELS = {
   orderTracking: "Sipariş Takibi",
   helpCenter: "Yardım Merkezi",
   allCategories: "Tüm Kategoriler",
+  categorySearch: "Kategori ara",
+  categoryNotFound: "Kategori bulunamadı",
+  categoriesUnavailable: "Kategoriler yüklenemedi",
+  viewProducts: "Ürünleri gör",
+  back: "Geri",
   quickView: "Hızlı Bak",
   compare: "Karşılaştır",
-  installment: "taksit",
   newBadge: "Yeni",
   discountBadge: "İndirim",
   originalProduct: "Orijinal Ürün",
@@ -105,8 +113,6 @@ export const LABELS = {
   postalCode: "Posta Kodu",
   orderSuccess: "Siparişiniz alındı",
   orderNumber: "Sipariş No",
-  darkMode: "Karanlık Mod",
-  lightMode: "Aydınlık Mod",
   notFound: "Sayfa bulunamadı",
   backToHome: "Ana Sayfaya Dön",
   filters: "Filtreler",
@@ -155,3 +161,6 @@ export const PAGE_SLUGS = {
 export const AUTH_STORAGE_KEY = "talazan-site-auth";
 export const CART_STORAGE_KEY = "talazan-site-cart";
 export const ORDERS_STORAGE_KEY = "talazan-site-orders";
+export const CHECKOUT_RESULT_KEY = "talazan-checkout-result";
+export const CHECKOUT_IDEMPOTENCY_KEY = "talazan-checkout-idempotency";
+export const CHECKOUT_GUEST_KEY = "talazan-checkout-guest";

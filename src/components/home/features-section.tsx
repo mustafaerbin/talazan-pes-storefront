@@ -20,7 +20,7 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <section className="rounded-[var(--radius-section)] border border-border bg-card p-8 shadow-premium md:p-12">
+    <section className="rounded-2xl border border-border bg-card px-4 py-6 md:px-6">
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
         {FEATURES.map((feature, index) => (
           <motion.div

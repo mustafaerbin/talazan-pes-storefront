@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
-import { env } from "@/config/env";
 import { ROUTES } from "@/config/constants";
+import { getRequestSiteUrl, resolveFirmaId } from "@/lib/tenant";
 import { storeService } from "@/services/store.service";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = env.siteUrl;
+  const base = await getRequestSiteUrl();
+  const firmaId = await resolveFirmaId();
   const staticRoutes = [
     "",
     ROUTES.search,
@@ -26,8 +27,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const [products, categories] = await Promise.all([
-      storeService.getProducts(env.firmaId, { size: 100 }),
-      storeService.getCategories(env.firmaId),
+      storeService.getProducts(firmaId, { size: 100 }),
+      storeService.getCategories(firmaId),
     ]);
 
     productRoutes = products.items

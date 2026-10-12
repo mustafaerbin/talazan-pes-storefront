@@ -9,6 +9,7 @@ import { LABELS, ROUTES } from "@/config/constants";
 import { useAddToCart } from "@/hooks/use-add-to-cart";
 import { useAuthStore } from "@/hooks/use-auth-store";
 import { useFavoriteToggle } from "@/hooks/use-favorites";
+import { useSidePanelStore } from "@/hooks/use-side-panel-store";
 import { useFirmaId } from "@/hooks/use-firma-id";
 import { accountService } from "@/services/account.service";
 import { storeService } from "@/services/store.service";
@@ -20,6 +21,7 @@ interface FavoritesDrawerBodyProps {
 
 export function FavoritesDrawerBody({ onClose }: FavoritesDrawerBodyProps) {
   const user = useAuthStore((s) => s.user);
+  const openLogin = useSidePanelStore((s) => s.openLogin);
   const firmaId = useFirmaId();
   const { toggle } = useFavoriteToggle();
   const { addProduct } = useAddToCart();
@@ -93,11 +95,7 @@ export function FavoritesDrawerBody({ onClose }: FavoritesDrawerBodyProps) {
           <div className="flex h-full flex-col items-center justify-center gap-4 py-16 text-center">
             <Heart className="size-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">Favorileri görmek için giriş yapın.</p>
-            <Button asChild>
-              <Link href={ROUTES.login} onClick={onClose}>
-                {LABELS.login}
-              </Link>
-            </Button>
+            <Button onClick={openLogin}>{LABELS.login}</Button>
           </div>
         ) : isLoading ? (
           <p className="py-16 text-center text-sm text-muted-foreground">{LABELS.loading}</p>
@@ -126,7 +124,7 @@ export function FavoritesDrawerBody({ onClose }: FavoritesDrawerBodyProps) {
                       className="relative size-[72px] shrink-0 overflow-hidden rounded-xl bg-secondary"
                     >
                       {product.resim ? (
-                        <Image src={product.resim} alt={product.isim} fill className="object-cover" />
+                        <Image src={product.resim} alt={product.isim} fill sizes="72px" className="object-cover" />
                       ) : (
                         <span className="flex h-full items-center justify-center text-muted-foreground">
                           <ShoppingBag className="size-6 opacity-40" />

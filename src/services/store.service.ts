@@ -9,6 +9,7 @@ import type {
   ProductFilters,
   SiteSayfaDto,
   StoreConfigDto,
+  StoreSiparisSonucDto,
   StoreUrunSoruDto,
   StoreUrunSoruOlusturDto,
 } from "@/types/api";
@@ -63,6 +64,14 @@ export const storeService = {
     return unwrapData(data);
   },
 
+  async getProductVariants(firmaId: number, urunId: number): Promise<FirmaUrunDto[]> {
+    const { data } = await apiClient.get<AppPageResponse<FirmaUrunDto[]>>(
+      `${STORE_BASE}/products/${urunId}/variants`,
+      { params: { firmaId } },
+    );
+    return unwrapList(data);
+  },
+
   async searchProducts(firmaId: number, q: string, limit = 10): Promise<FirmaUrunDto[]> {
     const { data } = await apiClient.get<AppPageResponse<FirmaUrunDto[]>>(`${STORE_BASE}/search`, {
       params: { firmaId, q, limit },
@@ -84,9 +93,23 @@ export const storeService = {
     return unwrapData(data);
   },
 
-  async createOrder(order: FirmaSiparisDto): Promise<FirmaSiparisDto> {
-    const { data } = await apiClient.post<AppResponse<FirmaSiparisDto>>(`${STORE_BASE}/orders`, order);
+  async previewOrder(order: FirmaSiparisDto): Promise<StoreSiparisSonucDto> {
+    const { data } = await apiClient.post<AppResponse<StoreSiparisSonucDto>>(`${STORE_BASE}/orders/preview`, order);
     return unwrapData(data);
+  },
+
+  async createOrder(order: FirmaSiparisDto): Promise<StoreSiparisSonucDto> {
+    const { data } = await apiClient.post<AppResponse<StoreSiparisSonucDto>>(`${STORE_BASE}/orders`, order);
+    return unwrapData(data);
+  },
+
+  async trackOrder(payload: { firmaId: number; siparisNo: string; takipToken?: string }): Promise<StoreSiparisSonucDto> {
+    const { data } = await apiClient.post<AppResponse<StoreSiparisSonucDto>>(`${STORE_BASE}/orders/track`, payload);
+    return unwrapData(data);
+  },
+
+  async claimOrder(payload: { firmaId: number; siparisNo: string; takipToken: string }): Promise<void> {
+    await apiClient.post(`${STORE_BASE}/orders/claim`, payload);
   },
 
   async getProductQuestions(firmaId: number, urunId: number): Promise<StoreUrunSoruDto[]> {

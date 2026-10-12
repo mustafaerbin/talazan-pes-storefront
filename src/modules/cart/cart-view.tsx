@@ -2,17 +2,30 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { LABELS, ROUTES } from "@/config/constants";
 import { useCartStore } from "@/hooks/use-cart-store";
+import { useFirmaId } from "@/hooks/use-firma-id";
+import { storeService } from "@/services/store.service";
+import { shippingAmount, shippingMessage, shippingPolicyText } from "@/lib/shipping";
 import { formatPrice } from "@/lib/utils";
 
 export function CartView() {
   const { items, updateQuantity, removeItem, getSubtotal, clearCart } = useCartStore();
   const subtotal = getSubtotal();
+  const firmaId = useFirmaId();
+  const { data: config } = useQuery({
+    queryKey: ["store-config", firmaId],
+    queryFn: () => storeService.getConfig(firmaId),
+  });
+  const shipping = config ? shippingAmount(subtotal, config.ucretsizKargoLimiti, config.kargoUcreti) : null;
+  const total = shipping == null ? null : subtotal + shipping;
+  const threshold = config?.ucretsizKargoLimiti ?? 0;
+  const belowFreeShipping = threshold > 0 && subtotal < threshold;
 
   if (items.length === 0) {
     return (
@@ -81,12 +94,23 @@ export function CartView() {
           </div>
           <div className="flex justify-between text-sm">
             <span>{LABELS.shipping}</span>
-            <span>{LABELS.freeShipping}</span>
+            <span>
+              {shipping == null
+                ? "Hesaplanıyor"
+                : belowFreeShipping
+                  ? shippingMessage(subtotal, threshold, config?.kargoUcreti)
+                  : shipping === 0
+                    ? LABELS.freeShipping
+                    : formatPrice(shipping)}
+            </span>
           </div>
+          <p className="text-xs text-muted-foreground">
+            {shippingPolicyText(config?.ucretsizKargoLimiti, config?.kargoUcreti)}
+          </p>
           <Separator />
           <div className="flex justify-between text-lg font-semibold">
             <span>{LABELS.total}</span>
-            <span>{formatPrice(subtotal)}</span>
+            <span>{total == null ? "—" : formatPrice(total)}</span>
           </div>
           <Button className="w-full" size="lg" asChild>
             <Link href={ROUTES.checkout}>{LABELS.proceedToCheckout}</Link>

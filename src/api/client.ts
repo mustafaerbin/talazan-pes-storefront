@@ -14,6 +14,24 @@ interface AuthStorage {
 }
 
 let refreshPromise: Promise<SiteMusteriAuthResponseDto | null> | null = null;
+let onSessionExpired: (() => void) | null = null;
+
+export function setSessionExpiredHandler(handler: () => void) {
+  onSessionExpired = handler;
+}
+
+const SESSION_EXPIRED = "Oturumunuz sona erdi. Lütfen tekrar giriş yapın.";
+
+function authFailureMessage(error: AxiosError): string | null {
+  const status = error.response?.status;
+  const data = error.response?.data as { message?: string; errorMessage?: string } | undefined;
+  const message = data?.errorMessage ?? data?.message ?? "";
+  if (status === 401) return SESSION_EXPIRED;
+  if (/ge[cç]ersiz token|yetkilendirme tokeni|ge[cç]ersiz refresh token/i.test(message)) {
+    return SESSION_EXPIRED;
+  }
+  return null;
+}
 
 export function getAuthStorage(): AuthStorage | null {
   if (typeof window === "undefined") return null;
@@ -43,6 +61,7 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  config.baseURL = env.apiUrl;
   const auth = getAuthStorage();
   if (auth?.accessToken) {
     config.headers.Authorization = `Bearer ${auth.accessToken}`;
@@ -83,7 +102,8 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    const sessionMessage = authFailureMessage(error);
+    if (sessionMessage && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
       if (!refreshPromise) {
@@ -97,6 +117,8 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${refreshed.accessToken}`;
         return apiClient(originalRequest);
       }
+      onSessionExpired?.();
+      return Promise.reject(new Error(sessionMessage));
     }
 
     if (error instanceof AggregateError && !error.message) {

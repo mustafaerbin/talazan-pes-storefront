@@ -20,7 +20,7 @@ const contactSchema = z.object({
 
 type ContactForm = z.infer<typeof contactSchema>;
 
-export function ContactForm() {
+export function ContactForm({ embedded = false }: { embedded?: boolean } = {}) {
   const {
     register,
     handleSubmit,
@@ -33,36 +33,40 @@ export function ContactForm() {
     reset();
   };
 
+  const form = (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className={embedded ? "grid gap-4" : "grid gap-4 md:grid-cols-2"}>
+        <div className="space-y-2">
+          <Label>Ad Soyad</Label>
+          <Input {...register("ad")} />
+        </div>
+        <div className="space-y-2">
+          <Label>{LABELS.email}</Label>
+          <Input type="email" {...register("email")} />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>{LABELS.subject}</Label>
+        <Input {...register("konu")} />
+      </div>
+      <div className="space-y-2">
+        <Label>{LABELS.message}</Label>
+        <Textarea {...register("mesaj")} rows={5} />
+      </div>
+      <Button type="submit" className={embedded ? "w-full" : undefined} disabled={isSubmitting}>
+        {LABELS.sendMessage}
+      </Button>
+    </form>
+  );
+
+  if (embedded) return form;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{LABELS.sendMessage}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Ad Soyad</Label>
-              <Input {...register("ad")} />
-            </div>
-            <div className="space-y-2">
-              <Label>{LABELS.email}</Label>
-              <Input type="email" {...register("email")} />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>{LABELS.subject}</Label>
-            <Input {...register("konu")} />
-          </div>
-          <div className="space-y-2">
-            <Label>{LABELS.message}</Label>
-            <Textarea {...register("mesaj")} rows={5} />
-          </div>
-          <Button type="submit" disabled={isSubmitting}>
-            {LABELS.sendMessage}
-          </Button>
-        </form>
-      </CardContent>
+      <CardContent>{form}</CardContent>
     </Card>
   );
 }

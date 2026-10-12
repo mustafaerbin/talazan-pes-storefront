@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 import {
   Heart,
   HelpCircle,
@@ -15,14 +15,15 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { CategoryDrilldown } from "@/components/layout/category-drilldown";
 import { MegaMenu } from "@/components/layout/mega-menu";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LABELS, ROUTES } from "@/config/constants";
 import { useAuthStore } from "@/hooks/use-auth-store";
 import { useCartStore } from "@/hooks/use-cart-store";
 import { useSidePanelStore } from "@/hooks/use-side-panel-store";
+import { shippingPolicyText } from "@/lib/shipping";
 import type { FirmaKategoriDto, StoreConfigDto } from "@/types/api";
 
 interface SiteHeaderProps {
@@ -33,18 +34,29 @@ interface SiteHeaderProps {
 export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
   const header = config.header;
   const pathname = usePathname();
+  const currentSearch = useSearchParams();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const cartCount = useCartStore((s) => s.getItemCount());
+  const [clientReady, setClientReady] = useState(false);
+  const cartCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.adet, 0));
   const user = useAuthStore((s) => s.user);
+  const visibleCartCount = clientReady ? cartCount : 0;
+  const visibleUser = clientReady ? user : null;
+
+  useEffect(() => {
+    setClientReady(true);
+  }, []);
   const logout = useAuthStore((s) => s.logout);
   const openCart = useSidePanelStore((s) => s.openCart);
   const openFavorites = useSidePanelStore((s) => s.openFavorites);
+  const openLogin = useSidePanelStore((s) => s.openLogin);
+  const openContact = useSidePanelStore((s) => s.openContact);
 
-  const logoUrl = header?.logoUrl ?? config.ayarlar?.logoUrl;
+  const logoUrl = header?.logoUrl?.trim() || config.ayarlar?.logoUrl?.trim() || "";
   const siteTitle = config.ayarlar?.siteBaslik ?? config.firmaIsim;
-  const announcement = header?.duyuruMetni ?? LABELS.freeShippingBanner;
+  const announcement =
+    header?.duyuruMetni ?? shippingPolicyText(config.ucretsizKargoLimiti, config.kargoUcreti);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -53,20 +65,37 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
     setMobileOpen(false);
   };
 
-  const navLinks = [
+  const openContactPanel = () => {
+    setMobileOpen(false);
+    openContact({
+      phone: config.ayarlar?.iletisimTelefon,
+      email: config.ayarlar?.iletisimEmail,
+    });
+  };
+
+  const navLinks: Array<{ href?: string; label: string; onClick?: () => void }> = [
     { href: ROUTES.home, label: LABELS.home },
-    { href: `${ROUTES.search}?sort=id,desc`, label: LABELS.newArrivals },
-    { href: ROUTES.search, label: LABELS.bestSellers },
-    { href: `${ROUTES.search}?indirimli=true`, label: LABELS.discountedProducts },
-    { href: ROUTES.search, label: "Markalar" },
-    { href: ROUTES.blog, label: LABELS.blog },
-    { href: ROUTES.contact, label: LABELS.contact },
+    { href: ROUTES.catalog("cok-satan"), label: LABELS.bestSellers },
+    { href: ROUTES.catalog("yeni"), label: LABELS.newArrivals },
+    { href: ROUTES.catalog("indirimli"), label: LABELS.discountedProducts },
+    { href: ROUTES.catalog("markalar"), label: LABELS.brands },
   ];
+
+  const isNavActive = (href: string) => {
+    const [path, query = ""] = href.split("?");
+    if (pathname !== path) return false;
+    const expected = new URLSearchParams(query);
+    if ([...expected.keys()].length === 0) return currentSearch.toString() === "";
+    for (const [key, value] of expected.entries()) {
+      if (currentSearch.get(key) !== value) return false;
+    }
+    return true;
+  };
 
   return (
     <header className="sticky top-0 z-50">
       <div className="bg-[hsl(var(--topbar-bg))] text-[hsl(var(--topbar-fg))]">
-        <div className="container mx-auto flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-xs md:text-sm">
+        <div className="container mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-1.5 text-xs">
           <p className="font-medium tracking-wide">{announcement}</p>
           <div className="flex flex-wrap items-center gap-5">
             <Link href={ROUTES.orders} className="inline-flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
@@ -77,17 +106,21 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
               <HelpCircle className="size-3.5" />
               {LABELS.helpCenter}
             </Link>
-            <Link href={ROUTES.contact} className="inline-flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
+            <button
+              type="button"
+              onClick={openContactPanel}
+              className="inline-flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100"
+            >
               <Phone className="size-3.5" />
               {LABELS.contact}
-            </Link>
+            </button>
           </div>
         </div>
       </div>
 
       <div className="border-b border-border bg-card/95 shadow-card backdrop-blur-xl">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 py-2.5">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -108,14 +141,14 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
             </Link>
 
             {(header?.aramaAktif ?? true) && (
-              <form onSubmit={handleSearch} className="hidden flex-1 md:block">
-                <div className="relative mx-auto max-w-2xl">
-                  <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+              <form onSubmit={handleSearch} className="hidden min-w-0 flex-1 sm:block">
+                <div className="relative mx-auto max-w-3xl">
+                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={LABELS.searchPlaceholder}
-                    className="h-12 border-border/80 bg-secondary/60 pl-12 pr-4 text-base focus-visible:bg-card"
+                    className="h-10 border-border bg-secondary/50 pl-9 pr-4 text-sm focus-visible:bg-card"
                     aria-label={LABELS.searchPlaceholder}
                   />
                 </div>
@@ -123,31 +156,33 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
             )}
 
             <div className="ml-auto flex items-center gap-1 sm:gap-2">
-              <ThemeToggle />
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden sm:inline-flex"
+                className="inline-flex"
                 onClick={openFavorites}
                 aria-label={LABELS.favorites}
               >
                 <Heart className="size-5" />
               </Button>
               {(header?.hesapAktif ?? true) &&
-                (user ? (
+                (visibleUser ? (
                   <div className="hidden items-center gap-2 sm:flex">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={ROUTES.account}>{user.ad}</Link>
+                      <Link href={ROUTES.account}>{visibleUser.ad}</Link>
                     </Button>
                     <Button variant="outline" size="sm" onClick={logout}>
                       {LABELS.logout}
                     </Button>
                   </div>
                 ) : (
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link href={ROUTES.login} aria-label={LABELS.login}>
-                      <User className="size-5" />
-                    </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={openLogin}
+                    aria-label={LABELS.login}
+                  >
+                    <User className="size-5" />
                   </Button>
                 ))}
               {(header?.sepetAktif ?? true) && (
@@ -159,9 +194,9 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
                   aria-label={LABELS.cart}
                 >
                   <ShoppingCart className="size-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-card">
-                      {cartCount}
+                  {visibleCartCount > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                      {visibleCartCount}
                     </span>
                   )}
                 </Button>
@@ -169,20 +204,42 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
             </div>
           </div>
 
-          <div className="mt-4 hidden items-center gap-6 border-t border-border/70 pt-3.5 lg:flex">
+          <form onSubmit={handleSearch} className="relative mt-2 sm:hidden">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={LABELS.searchPlaceholder}
+              className="h-10 border-border bg-secondary/50 pl-9 text-sm"
+              aria-label={LABELS.searchPlaceholder}
+            />
+          </form>
+
+          <div className="mt-2 hidden items-center gap-5 border-t border-border/70 pt-2 lg:flex">
             <MegaMenu categories={categories} />
             <nav className="flex flex-1 items-center gap-6 overflow-x-auto scrollbar-hide" aria-label="Ana menü">
-              {navLinks.map((link) => (
-                <Link
-                  key={`${link.href}-${link.label}`}
-                  href={link.href}
-                  className={`whitespace-nowrap text-sm font-semibold transition-colors hover:text-primary ${
-                    pathname === link.href ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks.map((link) =>
+                link.onClick ? (
+                  <button
+                    key={link.label}
+                    type="button"
+                    onClick={link.onClick}
+                    className="whitespace-nowrap text-sm font-semibold text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    {link.label}
+                  </button>
+                ) : (
+                  <Link
+                    key={`${link.href}-${link.label}`}
+                    href={link.href ?? ROUTES.home}
+                    className={`whitespace-nowrap text-sm font-semibold transition-colors hover:text-primary ${
+                      link.href && isNavActive(link.href) ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ),
+              )}
             </nav>
           </div>
         </div>
@@ -201,8 +258,8 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="h-full w-[min(88vw,360px)] overflow-y-auto bg-card p-6 shadow-hover"
+              transition={{ duration: 0.2 }}
+              className="h-full w-full overflow-y-auto overflow-x-hidden bg-card p-4 sm:w-[min(100vw,28rem)]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-6 flex items-center justify-between">
@@ -219,33 +276,33 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
                 />
               </form>
               <div className="mb-4">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {LABELS.categories}
                 </p>
-                <nav className="flex flex-col gap-1">
-                  {categories.slice(0, 10).map((cat) => (
+                <CategoryDrilldown categories={categories} onNavigate={() => setMobileOpen(false)} />
+              </div>
+              <nav className="flex flex-col gap-1 border-t border-border pt-4">
+                {navLinks.map((link) =>
+                  link.onClick ? (
+                    <button
+                      key={link.label}
+                      type="button"
+                      onClick={link.onClick}
+                      className="rounded-[14px] px-3 py-2.5 text-left text-sm font-medium hover:bg-secondary"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
                     <Link
-                      key={cat.id}
-                      href={ROUTES.category(cat.slug ?? String(cat.id))}
+                      key={`${link.href}-${link.label}`}
+                      href={link.href ?? ROUTES.home}
                       onClick={() => setMobileOpen(false)}
                       className="rounded-[14px] px-3 py-2.5 text-sm font-medium hover:bg-secondary"
                     >
-                      {cat.isim}
+                      {link.label}
                     </Link>
-                  ))}
-                </nav>
-              </div>
-              <nav className="flex flex-col gap-1 border-t border-border pt-4">
-                {navLinks.map((link) => (
-                  <Link
-                    key={`${link.href}-${link.label}`}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="rounded-[14px] px-3 py-2.5 text-sm font-medium hover:bg-secondary"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+                  ),
+                )}
               </nav>
             </motion.aside>
           </motion.div>

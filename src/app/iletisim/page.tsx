@@ -3,7 +3,7 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ContactForm } from "@/modules/content/contact-form";
 import { ContentPage } from "@/modules/content/content-page";
 import { LABELS, PAGE_SLUGS, ROUTES } from "@/config/constants";
-import { resolveFirmaId } from "@/config/env";
+import { resolveFirmaId } from "@/lib/tenant";
 import { getStoreConfig } from "@/modules/store/store.server";
 import { storeService } from "@/services/store.service";
 import { buildStoreMetadata } from "@/utils/seo";
@@ -14,9 +14,9 @@ export async function generateMetadata({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const sp = await searchParams;
-  const firmaId = resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId(sp);
   const config = await getStoreConfig(firmaId).catch(() => null);
-  return buildStoreMetadata(config, { title: LABELS.contact, path: ROUTES.contact });
+  return await buildStoreMetadata(config, { title: LABELS.contact, path: ROUTES.contact });
 }
 
 export default async function ContactPage({
@@ -25,7 +25,7 @@ export default async function ContactPage({
   searchParams: Promise<{ firmaId?: string }>;
 }) {
   const sp = await searchParams;
-  const firmaId = resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId(sp);
   const config = await getStoreConfig(firmaId).catch(() => null);
   let page = null;
   try {

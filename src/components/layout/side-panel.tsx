@@ -3,7 +3,10 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidePanelStore } from "@/hooks/use-side-panel-store";
+import { AddressDrawerBody } from "@/components/layout/address-drawer-body";
+import { AuthDrawerBody } from "@/components/layout/auth-drawer-body";
 import { CartDrawerBody } from "@/components/layout/cart-drawer-body";
+import { ContactDrawerBody } from "@/components/layout/contact-drawer-body";
 import { FavoritesDrawerBody } from "@/components/layout/favorites-drawer-body";
 
 export function SidePanel() {
@@ -47,7 +50,11 @@ export function SidePanel() {
             transition={{ type: "spring", damping: 32, stiffness: 320 }}
             className="absolute inset-y-0 right-0 flex w-full max-w-[440px] flex-col bg-background shadow-hover"
           >
-            {mode === "cart" ? <CartDrawerBody onClose={close} /> : <FavoritesDrawerBody onClose={close} />}
+            {mode === "cart" && <CartDrawerBody onClose={close} />}
+            {mode === "favorites" && <FavoritesDrawerBody onClose={close} />}
+            {(mode === "login" || mode === "register") && <AuthDrawerBody onClose={close} />}
+            {mode === "contact" && <ContactDrawerBody onClose={close} />}
+            {mode === "address" && <AddressDrawerBody onClose={close} />}
           </motion.aside>
         </motion.div>
       )}

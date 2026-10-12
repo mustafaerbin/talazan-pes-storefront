@@ -1,5 +1,5 @@
 import { storeService } from "@/services/store.service";
-import { resolveFirmaId } from "@/config/env";
+import { resolveFirmaId } from "@/lib/tenant";
 import type { FirmaUrunDto, HomeProductPools, StoreConfigDto } from "@/types/api";
 
 function withDiscount(products: FirmaUrunDto[]): FirmaUrunDto[] {
@@ -39,12 +39,12 @@ function fallbackConfig(firmaId: number): StoreConfigDto {
 }
 
 export async function getStoreConfig(firmaId?: number) {
-  const id = firmaId ?? resolveFirmaId();
+  const id = firmaId ?? await resolveFirmaId();
   return storeService.getConfig(id);
 }
 
 export async function getStoreData(firmaId?: number) {
-  const id = firmaId ?? resolveFirmaId();
+  const id = firmaId ?? await resolveFirmaId();
   const [config, categories, brands, featured, catalog] = await Promise.all([
     storeService.getConfig(id).catch(() => fallbackConfig(id)),
     storeService.getCategories(id).catch(() => []),

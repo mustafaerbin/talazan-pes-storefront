@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useTheme as useNextTheme } from "next-themes";
 import { applyThemeVars, resolveThemeCode, type ThemeDefinition, themes } from "@/themes/registry";
 import type { ThemeCode } from "@/types/api";
 
@@ -30,7 +29,6 @@ export function StoreThemeProvider({
   brandColors,
 }: StoreThemeProviderProps) {
   const [themeCode, setThemeCode] = useState<ThemeCode>(() => resolveThemeCode(initialThemeCode));
-  const { resolvedTheme } = useNextTheme();
 
   useEffect(() => {
     if (initialThemeCode) {
@@ -51,12 +49,8 @@ export function StoreThemeProvider({
       root.style.setProperty(key, value);
     });
 
-    if (resolvedTheme === "dark" && themeCode !== "electronics") {
-      root.classList.add("theme-dark-override");
-    } else {
-      root.classList.remove("theme-dark-override");
-    }
-  }, [cssVars, resolvedTheme, themeCode]);
+    root.classList.remove("theme-dark-override", "dark");
+  }, [cssVars]);
 
   return (
     <StoreThemeContext.Provider value={{ themeCode, theme, cssVars, setThemeCode }}>

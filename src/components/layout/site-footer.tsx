@@ -1,8 +1,6 @@
-import Link from "next/link";
 import {
   AtSign,
   Briefcase,
-  Camera,
   CreditCard,
   Globe,
   Mail,
@@ -12,6 +10,7 @@ import {
   Truck,
   Users,
 } from "lucide-react";
+import { FooterNavLink } from "@/components/layout/footer-nav-link";
 import { LABELS, ROUTES } from "@/config/constants";
 import type { FooterColumn, StoreConfigDto } from "@/types/api";
 
@@ -38,6 +37,25 @@ function parsePaymentLogos(raw?: string): string[] {
   }
 }
 
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 const PAYMENT_LABELS = ["Visa", "Mastercard", "Troy", "Amex"];
 const SHIPPING_LABELS = ["Yurtiçi", "Aras", "MNG", "Sürat"];
 
@@ -52,15 +70,16 @@ export function SiteFooter({ config }: SiteFooterProps) {
       baslik: LABELS.categories,
       linkler: [
         { etiket: LABELS.search, url: ROUTES.search },
-        { etiket: LABELS.newArrivals, url: `${ROUTES.search}?sort=id,desc` },
-        { etiket: LABELS.bestSellers, url: ROUTES.search },
+        { etiket: LABELS.newArrivals, url: ROUTES.catalog("yeni") },
+        { etiket: LABELS.bestSellers, url: ROUTES.catalog("cok-satan") },
+        { etiket: LABELS.discountedProducts, url: ROUTES.catalog("indirimli") },
+        { etiket: LABELS.brands, url: ROUTES.catalog("markalar") },
       ],
     },
     {
       baslik: LABELS.corporate,
       linkler: [
         { etiket: LABELS.about, url: ROUTES.about },
-        { etiket: LABELS.blog, url: ROUTES.blog },
         { etiket: LABELS.contact, url: ROUTES.contact },
       ],
     },
@@ -81,10 +100,15 @@ export function SiteFooter({ config }: SiteFooterProps) {
     },
   ];
 
-  const displayColumns = columns.length > 0 ? columns : defaultColumns;
+  const displayColumns = (columns.length > 0 ? columns : defaultColumns)
+    .map((column) => ({
+      ...column,
+      linkler: column.linkler.filter((link) => link.url !== ROUTES.blog && link.etiket !== LABELS.blog),
+    }))
+    .filter((column) => column.linkler.length > 0);
 
   const socialLinks = [
-    { href: ayarlar?.instagramUrl, label: "Instagram", icon: Camera },
+    { href: ayarlar?.instagramUrl, label: "Instagram", icon: InstagramIcon },
     { href: ayarlar?.facebookUrl, label: "Facebook", icon: Users },
     { href: ayarlar?.twitterUrl, label: "Twitter", icon: AtSign },
     { href: ayarlar?.youtubeUrl, label: "YouTube", icon: Play },
@@ -163,12 +187,13 @@ export function SiteFooter({ config }: SiteFooterProps) {
             <ul className="space-y-3 text-sm text-muted-foreground">
               {column.linkler.map((link) => (
                 <li key={`${link.url}-${link.etiket}`}>
-                  <Link
+                  <FooterNavLink
                     href={link.url}
+                    label={link.etiket}
+                    phone={ayarlar?.iletisimTelefon}
+                    email={ayarlar?.iletisimEmail}
                     className="transition-colors hover:text-primary"
-                  >
-                    {link.etiket}
-                  </Link>
+                  />
                 </li>
               ))}
             </ul>

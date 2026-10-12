@@ -4,7 +4,8 @@ import "@/styles/globals.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AppProviders } from "@/providers/app-providers";
-import { env } from "@/config/env";
+import { FirmaIdProvider } from "@/providers/firma-id-provider";
+import { getRequestSiteUrl, resolveFirmaId } from "@/lib/tenant";
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -17,28 +18,36 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Talazan Mağaza",
-    template: "%s | Talazan Mağaza",
-  },
-  description: "Premium e-ticaret mağazası",
-  metadataBase: new URL(env.siteUrl),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const siteUrl = await getRequestSiteUrl();
+  return {
+    title: {
+      default: "Talazan Mağaza",
+      template: "%s | Talazan Mağaza",
+    },
+    description: "Premium e-ticaret mağazası",
+    metadataBase: new URL(siteUrl),
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const firmaId = await resolveFirmaId();
+  const siteUrl = await getRequestSiteUrl();
+
   return (
     <html lang="tr" suppressHydrationWarning>
       <body className={`${jakartaSans.variable} ${geistMono.variable} min-h-screen antialiased`}>
-        <ThemeProvider>
-          <QueryProvider>
-            <AppProviders>{children}</AppProviders>
-          </QueryProvider>
-        </ThemeProvider>
+        <FirmaIdProvider firmaId={firmaId} siteUrl={siteUrl}>
+          <ThemeProvider>
+            <QueryProvider>
+              <AppProviders>{children}</AppProviders>
+            </QueryProvider>
+          </ThemeProvider>
+        </FirmaIdProvider>
       </body>
     </html>
   );
