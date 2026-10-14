@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface SectionHeaderProps {
@@ -17,22 +16,20 @@ export function SectionHeader({
   title,
   subtitle,
   href,
-  linkLabel = "Tümünü Gör",
+  linkLabel = "Tümünü gör",
   className,
 }: SectionHeaderProps) {
   return (
     <div className={cn("flex items-end justify-between gap-4", className)}>
-      <div className="space-y-2">
-        <h2 className="text-xl font-bold tracking-tight md:text-2xl">{title}</h2>
-        {subtitle && <p className="text-base text-muted-foreground">{subtitle}</p>}
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight md:text-2xl">{title}</h2>
+        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       {href && (
-        <Button variant="outline" asChild className="shrink-0 gap-1.5">
-          <Link href={href}>
-            {linkLabel}
-            <ArrowRight className="size-4" />
-          </Link>
-        </Button>
+        <Link href={href} className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline">
+          {linkLabel}
+          <ArrowRight className="size-4" />
+        </Link>
       )}
     </div>
   );

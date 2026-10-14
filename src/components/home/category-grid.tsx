@@ -25,7 +25,7 @@ export function CategoryGrid({ categories, title, subtitle }: CategoryGridProps)
     <section className="space-y-4">
       {(title || subtitle) && (
         <div>
-          {title && <h2 className="text-xl font-bold tracking-tight md:text-2xl">{title}</h2>}
+          {title && <h2 className="text-xl font-semibold tracking-tight md:text-2xl">{title}</h2>}
           {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
         </div>
       )}

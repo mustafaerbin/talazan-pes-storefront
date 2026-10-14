@@ -127,12 +127,12 @@ export function ProductListing({ initialFilters = {}, initialCategories, title }
         ) : brands.length === 0 ? (
           <p className="py-12 text-center text-muted-foreground">{LABELS.noResults}</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 py-4">
             {brands.map((brand) => (
               <Link
                 key={brand.id}
                 href={`${ROUTES.search}?markaId=${brand.id}`}
-                className="rounded-[var(--radius-card)] border border-border bg-card px-5 py-6 text-center text-sm font-bold shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:text-primary hover:shadow-hover"
+                className="text-sm font-semibold tracking-wide text-muted-foreground transition-colors hover:text-foreground"
               >
                 {brand.isim}
               </Link>

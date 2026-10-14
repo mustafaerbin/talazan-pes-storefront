@@ -54,7 +54,7 @@ function HomeProductFeed({
       {loading ? (
         <ProductGridSkeleton count={4} />
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} onAddToCart={addProduct} />
           ))}
@@ -109,7 +109,7 @@ export function HomeSections({
   loading,
 }: HomeSectionsProps) {
   return (
-    <div className="space-y-10 pb-8 md:space-y-12">
+    <div className="space-y-12 pb-8 md:space-y-16">
       {sections
         .filter((section) => section.aktif)
         .map((section) => {
@@ -159,12 +159,12 @@ export function HomeSections({
                     subtitle={section.altBaslik}
                     href={ROUTES.catalog("markalar")}
                   />
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                  <div className="flex gap-6 overflow-x-auto py-2 scrollbar-hide md:flex-wrap md:justify-center md:overflow-visible">
                     {brands.map((brand) => (
                       <Link
                         key={brand.id}
                         href={`${ROUTES.search}?markaId=${brand.id}`}
-                        className="rounded-[var(--radius-card)] border border-border bg-card px-5 py-6 text-center text-sm font-bold shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:text-primary hover:shadow-hover"
+                        className="shrink-0 text-sm font-semibold tracking-wide text-muted-foreground transition-colors hover:text-foreground"
                       >
                         {brand.isim}
                       </Link>

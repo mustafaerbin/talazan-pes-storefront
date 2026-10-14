@@ -39,7 +39,7 @@ export function ProductCarousel({
   if (!loading && products.length === 0) return null;
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <SectionHeader title={title} subtitle={subtitle} href={viewAllHref} className="flex-1" />
         <div className="hidden gap-2 sm:flex">

@@ -4,18 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-card hover:-translate-y-0.5 hover:shadow-hover active:translate-y-0",
+          "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80",
         destructive:
-          "bg-destructive text-white shadow-card hover:-translate-y-0.5 hover:opacity-90",
+          "bg-destructive text-white hover:opacity-90",
         outline:
-          "border border-border bg-card shadow-card hover:-translate-y-0.5 hover:border-primary/30 hover:bg-secondary hover:shadow-hover",
+          "border border-border bg-card hover:border-primary/40 hover:bg-secondary",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-card hover:-translate-y-0.5 hover:shadow-hover",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-secondary hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },

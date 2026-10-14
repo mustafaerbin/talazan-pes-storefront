@@ -26,17 +26,17 @@
   --topbar-fg: 0 0% 100%;
 
   /* Border radius tokens */
-  --radius-btn: 14px;
-  --radius-input: 14px;
-  --radius-card: 20px;
-  --radius-hero: 28px;
-  --radius-section: 24px;
-  --radius: 0.875rem;
+  --radius-btn: 10px;
+  --radius-input: 10px;
+  --radius-card: 12px;
+  --radius-hero: 16px;
+  --radius-section: 16px;
+  --radius: 0.75rem;
 
   /* Premium soft shadows */
-  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.06);
-  --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.04);
-  --shadow-hover: 0 16px 40px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-hover: 0 10px 24px rgba(15, 23, 42, 0.08);
   --glass: hsl(0 0% 100% / 0.88);
 }
 
@@ -75,8 +75,17 @@ body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .prose-content h1,

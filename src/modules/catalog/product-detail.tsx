@@ -33,7 +33,6 @@ import { attrMap, buildVariantGroups, findVariantForSelection } from "@/lib/prod
 import { cn } from "@/lib/utils";
 import type { FirmaUrunDto } from "@/types/api";
 import { toast } from "sonner";
-import { getProductReviewsMock, getReviewSummary } from "./product-detail-mock";
 import { ProductReviewsSection } from "./product-reviews-section";
 import { ProductQuestionsSection } from "./product-questions-section";
 
@@ -129,8 +128,6 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
     return list;
   }, [current.resim, current.resimler]);
 
-  const reviews = useMemo(() => getProductReviewsMock(current), [current]);
-  const reviewSummary = useMemo(() => getReviewSummary(reviews), [reviews]);
   const specRows = useMemo(() => buildSpecRows(current), [current]);
 
   const [imageIndex, setImageIndex] = useState(0);
@@ -158,10 +155,24 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
     queryFn: () => storeService.getProductVariants(firmaId, product.id),
     enabled: !!firmaId && !!product.id,
   });
+  const { data: reviewSummary } = useQuery({
+    queryKey: ["product-reviews", firmaId, current.id],
+    queryFn: () => storeService.getProductReviews(firmaId, current.id),
+    enabled: !!firmaId && !!current.id,
+  });
+  const reviewCount = reviewSummary?.yorumSayisi ?? current.yorumSayisi ?? 0;
+  const reviewAverage = reviewSummary?.ortalamaPuan ?? current.ortalamaPuan ?? 0;
 
   useEffect(() => {
     setCurrent((prev) => (prev.id === product.id ? product : prev));
   }, [product]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === "#degerlendirmeler") {
+      setActiveTab("reviews");
+    }
+  }, [current.id]);
 
   const allVariants = useMemo(() => {
     if (variants.length === 0) return [];
@@ -380,9 +391,11 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
               {current.isim}
             </h1>
 
-            <div className="mt-3">
-              <RatingLink average={reviewSummary.average} count={reviewSummary.count} onClick={scrollToReviews} />
-            </div>
+            {reviewCount > 0 && (
+              <div className="mt-3">
+                <RatingLink average={reviewAverage} count={reviewCount} onClick={scrollToReviews} />
+              </div>
+            )}
 
             {sku && (
               <p className="mt-2 text-xs text-muted-foreground">
@@ -562,7 +575,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
 
             {currentTab === "reviews" && (
               <div id="degerlendirmeler">
-                <ProductReviewsSection reviews={reviews} />
+                <ProductReviewsSection productId={current.id} />
               </div>
             )}
 
@@ -576,7 +589,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
       {!embedded && related.length > 0 && (
         <section className="space-y-6">
           <h2 className="text-2xl font-bold tracking-tight">İlginizi Çekebilecek Ürünler</h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
             {related.slice(0, 4).map((p) => (
               <ProductCard key={p.id} product={p} onAddToCart={addProduct} />
             ))}

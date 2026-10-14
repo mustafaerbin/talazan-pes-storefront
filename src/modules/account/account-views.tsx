@@ -191,19 +191,42 @@ export function OrdersView() {
         <div className="space-y-4">
           {orders.map((order) => (
             <Card key={order.siparisNo}>
-              <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
-                <div>
-                  <p className="font-medium">
-                    {LABELS.orderNumber}: {order.siparisNo}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(order.tarih).toLocaleDateString("tr-TR")} · {order.urunSayisi} ürün
-                  </p>
+              <CardContent className="space-y-4 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="font-medium">
+                      {LABELS.orderNumber}: {order.siparisNo}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(order.tarih).toLocaleDateString("tr-TR")} · {order.urunSayisi} ürün
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatPrice(order.tutar)}</p>
+                    <p className="text-sm text-muted-foreground">{order.durum}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold">{formatPrice(order.tutar)}</p>
-                  <p className="text-sm text-muted-foreground">{order.durum}</p>
-                </div>
+                {order.kalemler && order.kalemler.length > 0 && (
+                  <ul className="space-y-2 border-t border-border pt-3">
+                    {order.kalemler.map((kalem, index) => {
+                      const urunId = kalem.firmaUrunId;
+                      const href = urunId
+                        ? `${ROUTES.product(kalem.slug ?? String(urunId))}#degerlendirmeler`
+                        : undefined;
+                      const teslimEdildi = order.siparisDurum === "TESLIM_EDILDI";
+                      return (
+                        <li key={`${order.siparisNo}-${urunId ?? index}`} className="flex items-center justify-between gap-3 text-sm">
+                          <span className="line-clamp-1">{kalem.urunIsim}</span>
+                          {href && teslimEdildi && (
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={href}>Değerlendir</Link>
+                            </Button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -258,7 +281,7 @@ export function FavoritesView() {
       ) : favoriteIds.length === 0 ? (
         <p className="text-muted-foreground">{LABELS.emptyFavorites}</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
           {products.map((product) => (
             <ProductCard
               key={product.id}

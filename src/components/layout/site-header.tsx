@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
+  ChevronDown,
   Heart,
   HelpCircle,
   Menu,
@@ -23,8 +24,11 @@ import { LABELS, ROUTES } from "@/config/constants";
 import { useAuthStore } from "@/hooks/use-auth-store";
 import { useCartStore } from "@/hooks/use-cart-store";
 import { useSidePanelStore } from "@/hooks/use-side-panel-store";
+import { parseAnnouncementTexts } from "@/lib/announcements";
 import { shippingPolicyText } from "@/lib/shipping";
 import type { FirmaKategoriDto, StoreConfigDto } from "@/types/api";
+import { cn } from "@/lib/utils";
+import { AnnouncementTicker } from "@/components/layout/announcement-ticker";
 
 interface SiteHeaderProps {
   config: StoreConfigDto;
@@ -39,6 +43,8 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [clientReady, setClientReady] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
   const cartCount = useCartStore((s) => s.items.reduce((sum, item) => sum + item.adet, 0));
   const user = useAuthStore((s) => s.user);
   const visibleCartCount = clientReady ? cartCount : 0;
@@ -55,8 +61,19 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
 
   const logoUrl = header?.logoUrl?.trim() || config.ayarlar?.logoUrl?.trim() || "";
   const siteTitle = config.ayarlar?.siteBaslik ?? config.firmaIsim;
-  const announcement =
-    header?.duyuruMetni ?? shippingPolicyText(config.ucretsizKargoLimiti, config.kargoUcreti);
+  const announcements = parseAnnouncementTexts(
+    header?.duyuruMetni,
+    shippingPolicyText(config.ucretsizKargoLimiti, config.kargoUcreti),
+  );
+
+  useEffect(() => {
+    if (!accountOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!accountRef.current?.contains(event.target as Node)) setAccountOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [accountOpen]);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -73,11 +90,11 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
     });
   };
 
-  const navLinks: Array<{ href?: string; label: string; onClick?: () => void }> = [
+  const navLinks: Array<{ href?: string; label: string; onClick?: () => void; accent?: boolean }> = [
     { href: ROUTES.home, label: LABELS.home },
     { href: ROUTES.catalog("cok-satan"), label: LABELS.bestSellers },
     { href: ROUTES.catalog("yeni"), label: LABELS.newArrivals },
-    { href: ROUTES.catalog("indirimli"), label: LABELS.discountedProducts },
+    { href: ROUTES.catalog("indirimli"), label: LABELS.discountedProducts, accent: true },
     { href: ROUTES.catalog("markalar"), label: LABELS.brands },
   ];
 
@@ -92,24 +109,40 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
     return true;
   };
 
+  const searchField = (id: string, className?: string) => (
+    <form onSubmit={handleSearch} className={cn("relative min-w-0 flex-1", className)}>
+      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={LABELS.searchPlaceholder}
+        className="h-10 rounded-full border-border bg-secondary/50 pl-9 pr-20 text-sm focus-visible:bg-card"
+        aria-label={LABELS.searchPlaceholder}
+      />
+      <Button type="submit" size="sm" className="absolute right-1 top-1/2 h-8 -translate-y-1/2 rounded-full px-3">
+        {LABELS.search}
+      </Button>
+    </form>
+  );
+
   return (
     <header className="sticky top-0 z-50">
       <div className="bg-[hsl(var(--topbar-bg))] text-[hsl(var(--topbar-fg))]">
-        <div className="container mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-1.5 text-xs">
-          <p className="font-medium tracking-wide">{announcement}</p>
-          <div className="flex flex-wrap items-center gap-5">
-            <Link href={ROUTES.orders} className="inline-flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
+        <div className="container mx-auto flex h-8 items-center justify-between gap-x-4 px-4 text-[11px]">
+          <AnnouncementTicker texts={announcements} />
+          <div className="hidden items-center gap-4 sm:flex">
+            <Link href={ROUTES.orders} className="inline-flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100">
               <PackageSearch className="size-3.5" />
               {LABELS.orderTracking}
             </Link>
-            <Link href={ROUTES.faq} className="inline-flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100">
+            <Link href={ROUTES.faq} className="inline-flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100">
               <HelpCircle className="size-3.5" />
               {LABELS.helpCenter}
             </Link>
             <button
               type="button"
               onClick={openContactPanel}
-              className="inline-flex items-center gap-1.5 opacity-90 transition-opacity hover:opacity-100"
+              className="inline-flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100"
             >
               <Phone className="size-3.5" />
               {LABELS.contact}
@@ -118,7 +151,7 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
         </div>
       </div>
 
-      <div className="border-b border-border bg-card/95 shadow-card backdrop-blur-xl">
+      <div className="border-b border-border bg-card/95 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-2.5">
           <div className="flex items-center gap-3">
             <Button
@@ -136,84 +169,109 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt={siteTitle} className="h-9 w-auto md:h-10" />
               ) : (
-                <span className="text-xl font-extrabold tracking-tight text-foreground">{siteTitle}</span>
+                <span className="text-xl font-semibold tracking-tight text-foreground">{siteTitle}</span>
               )}
             </Link>
 
-            {(header?.aramaAktif ?? true) && (
-              <form onSubmit={handleSearch} className="hidden min-w-0 flex-1 sm:block">
-                <div className="relative mx-auto max-w-3xl">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder={LABELS.searchPlaceholder}
-                    className="h-10 border-border bg-secondary/50 pl-9 pr-4 text-sm focus-visible:bg-card"
-                    aria-label={LABELS.searchPlaceholder}
-                  />
-                </div>
-              </form>
-            )}
+            {(header?.aramaAktif ?? true) && searchField("desktop-search", "hidden sm:block")}
 
-            <div className="ml-auto flex items-center gap-1 sm:gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="inline-flex"
-                onClick={openFavorites}
-                aria-label={LABELS.favorites}
-              >
-                <Heart className="size-5" />
-              </Button>
+            <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+              {(header?.favoriAktif ?? true) && (
+                <button
+                  type="button"
+                  className="group inline-flex flex-col items-center gap-0.5 px-2 py-1 text-foreground transition-colors hover:text-primary"
+                  onClick={openFavorites}
+                  aria-label={LABELS.favorites}
+                >
+                  <Heart className="size-5" />
+                  <span className="hidden text-[11px] font-medium text-muted-foreground group-hover:text-primary lg:block">{LABELS.favorites}</span>
+                </button>
+              )}
               {(header?.hesapAktif ?? true) &&
                 (visibleUser ? (
-                  <div className="hidden items-center gap-2 sm:flex">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={ROUTES.account}>{visibleUser.ad}</Link>
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={logout}>
-                      {LABELS.logout}
-                    </Button>
+                  <div ref={accountRef} className="relative">
+                    <button
+                      type="button"
+                      className="group inline-flex flex-col items-center gap-0.5 px-2 py-1 text-foreground transition-colors hover:text-primary"
+                      onClick={() => setAccountOpen((value) => !value)}
+                      aria-expanded={accountOpen}
+                    >
+                      <span className="inline-flex items-center">
+                        <User className="size-5" />
+                        <ChevronDown className="hidden size-3 lg:inline" />
+                      </span>
+                      <span className="hidden max-w-20 truncate text-[11px] font-medium text-muted-foreground group-hover:text-primary lg:block">
+                        {LABELS.account}
+                      </span>
+                    </button>
+                    {accountOpen && (
+                      <div className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-xl border border-border bg-card py-1 shadow-hover">
+                        <p className="truncate px-3 py-2 text-xs text-muted-foreground">{visibleUser.ad}</p>
+                        <Link
+                          href={ROUTES.account}
+                          onClick={() => setAccountOpen(false)}
+                          className="block px-3 py-2 text-sm hover:bg-secondary"
+                        >
+                          {LABELS.account}
+                        </Link>
+                        <Link
+                          href={ROUTES.orders}
+                          onClick={() => setAccountOpen(false)}
+                          className="block px-3 py-2 text-sm hover:bg-secondary"
+                        >
+                          {LABELS.orders}
+                        </Link>
+                        <Link
+                          href={ROUTES.addresses}
+                          onClick={() => setAccountOpen(false)}
+                          className="block px-3 py-2 text-sm hover:bg-secondary"
+                        >
+                          {LABELS.addresses}
+                        </Link>
+                        <button
+                          type="button"
+                          className="block w-full px-3 py-2 text-left text-sm hover:bg-secondary"
+                          onClick={() => {
+                            setAccountOpen(false);
+                            logout();
+                          }}
+                        >
+                          {LABELS.logout}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  <button
+                    type="button"
+                    className="group inline-flex flex-col items-center gap-0.5 px-2 py-1 text-foreground transition-colors hover:text-primary"
                     onClick={openLogin}
                     aria-label={LABELS.login}
                   >
                     <User className="size-5" />
-                  </Button>
+                    <span className="hidden text-[11px] font-medium text-muted-foreground group-hover:text-primary lg:block">{LABELS.account}</span>
+                  </button>
                 ))}
               {(header?.sepetAktif ?? true) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative"
+                <button
+                  type="button"
+                  className="group relative inline-flex flex-col items-center gap-0.5 px-2 py-1 text-foreground transition-colors hover:text-primary"
                   onClick={openCart}
                   aria-label={LABELS.cart}
                 >
                   <ShoppingCart className="size-5" />
                   {visibleCartCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                    <span className="absolute right-0.5 top-0 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                       {visibleCartCount}
                     </span>
                   )}
-                </Button>
+                  <span className="hidden text-[11px] font-medium text-muted-foreground group-hover:text-primary lg:block">{LABELS.cart}</span>
+                </button>
               )}
             </div>
           </div>
 
-          <form onSubmit={handleSearch} className="relative mt-2 sm:hidden">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={LABELS.searchPlaceholder}
-              className="h-10 border-border bg-secondary/50 pl-9 text-sm"
-              aria-label={LABELS.searchPlaceholder}
-            />
-          </form>
+          {(header?.aramaAktif ?? true) && searchField("mobile-search", "mt-2 sm:hidden")}
 
           <div className="mt-2 hidden items-center gap-5 border-t border-border/70 pt-2 lg:flex">
             <MegaMenu categories={categories} />
@@ -232,9 +290,11 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
                   <Link
                     key={`${link.href}-${link.label}`}
                     href={link.href ?? ROUTES.home}
-                    className={`whitespace-nowrap text-sm font-semibold transition-colors hover:text-primary ${
-                      link.href && isNavActive(link.href) ? "text-primary" : "text-muted-foreground"
-                    }`}
+                    className={cn(
+                      "whitespace-nowrap text-sm font-semibold transition-colors hover:text-primary",
+                      link.href && isNavActive(link.href) ? "text-primary" : "text-muted-foreground",
+                      link.accent && !(link.href && isNavActive(link.href)) && "text-destructive",
+                    )}
                   >
                     {link.label}
                   </Link>
@@ -263,7 +323,7 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-6 flex items-center justify-between">
-                <span className="font-bold">{siteTitle}</span>
+                <span className="font-semibold">{siteTitle}</span>
                 <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}>
                   <X className="size-5" />
                 </Button>

@@ -383,6 +383,18 @@ export function CheckoutView() {
       tutar: order.toplam ?? 0,
       urunSayisi: items.reduce((sum, item) => sum + item.adet, 0),
       durum: paymentStatus(order),
+      siparisDurum: order.siparisDurum,
+      kalemler: (order.kalemler?.length ? order.kalemler : items.map((item) => ({
+        firmaUrunId: item.urunId,
+        urunIsim: item.isim,
+        resim: item.resim,
+        slug: item.slug,
+        adet: item.adet,
+      }))).map((kalem, index) => ({
+        ...kalem,
+        slug: kalem.slug ?? items[index]?.slug,
+        firmaUrunId: kalem.firmaUrunId ?? items[index]?.urunId,
+      })),
     });
     clearCart();
     router.push(ROUTES.orderConfirmation);

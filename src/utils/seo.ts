@@ -59,6 +59,7 @@ export async function buildStoreMetadata(
 
 export function buildProductJsonLd(product: FirmaUrunDto, siteUrl?: string) {
   const base = siteUrl ?? env.siteUrl;
+  const reviewCount = product.yorumSayisi ?? 0;
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -79,6 +80,15 @@ export function buildProductJsonLd(product: FirmaUrunDto, siteUrl?: string) {
           : "https://schema.org/OutOfStock",
       url: `${base}/urun/${product.slug ?? product.id}`,
     },
+    ...(reviewCount > 0 && product.ortalamaPuan != null
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: product.ortalamaPuan,
+            reviewCount,
+          },
+        }
+      : {}),
   };
 }
 

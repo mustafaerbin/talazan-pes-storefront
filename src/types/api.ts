@@ -49,6 +49,7 @@ export interface SiteHeaderDto {
   aramaAktif?: boolean;
   sepetAktif?: boolean;
   hesapAktif?: boolean;
+  favoriAktif?: boolean;
   duyuruMetni?: string;
   ekAyarlar?: string;
 }
@@ -141,6 +142,9 @@ export interface FirmaUrunDto {
   renk?: string;
   varyantBilgisi?: string;
   varyantOzellikleri?: { ozellikIsim?: string; degerIsim?: string }[];
+  grupKodu?: string;
+  ortalamaPuan?: number;
+  yorumSayisi?: number;
 }
 
 export interface SiteSayfaDto {
@@ -297,6 +301,7 @@ export interface StoreSiparisKalemDto {
   urunIsim?: string;
   varyantBilgisi?: string;
   resim?: string;
+  slug?: string;
   adet?: number;
   birimFiyat?: number;
   tutar?: number;
@@ -336,6 +341,8 @@ export interface LocalOrder {
   tutar: number;
   urunSayisi: number;
   durum: string;
+  siparisDurum?: string;
+  kalemler?: StoreSiparisKalemDto[];
 }
 
 export type ThemeCode = "minimal" | "modern" | "fashion" | "electronics" | "cosmetics";
@@ -427,4 +434,31 @@ export interface StoreUrunSoruOlusturDto {
   soru: string;
   musteriAdi?: string;
   musteriEmail?: string;
+}
+
+export interface StoreUrunYorumDto {
+  id: number;
+  musteriAdi?: string;
+  puan?: number;
+  baslik?: string;
+  yorum?: string;
+  createDate?: string;
+  saticiCevap?: string;
+  faydaliSayisi?: number;
+}
+
+export interface StoreUrunYorumOlusturDto {
+  firmaId: number;
+  puan: number;
+  baslik?: string;
+  yorum: string;
+}
+
+export interface StoreUrunYorumOzetDto {
+  ortalamaPuan?: number;
+  yorumSayisi?: number;
+  dagilim?: number[];
+  yorumlar?: StoreUrunYorumDto[];
+  yorumYazabilir?: boolean;
+  yorumYazmaNedeni?: "GIRIS_GEREKLI" | "SATIN_ALMA_YOK" | "BEKLEMEDE" | "YAZILDI" | string;
 }

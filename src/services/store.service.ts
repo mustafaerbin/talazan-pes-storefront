@@ -12,6 +12,9 @@ import type {
   StoreSiparisSonucDto,
   StoreUrunSoruDto,
   StoreUrunSoruOlusturDto,
+  StoreUrunYorumDto,
+  StoreUrunYorumOlusturDto,
+  StoreUrunYorumOzetDto,
 } from "@/types/api";
 
 const STORE_BASE = "/public/store";
@@ -124,6 +127,29 @@ export const storeService = {
     const { data } = await apiClient.post<AppResponse<StoreUrunSoruDto>>(
       `${STORE_BASE}/products/${urunId}/questions`,
       payload,
+    );
+    return unwrapData(data);
+  },
+
+  async getProductReviews(firmaId: number, urunId: number): Promise<StoreUrunYorumOzetDto> {
+    const { data } = await apiClient.get<AppResponse<StoreUrunYorumOzetDto>>(
+      `${STORE_BASE}/products/${urunId}/reviews`,
+      { params: { firmaId } },
+    );
+    return unwrapData(data);
+  },
+
+  async createProductReview(urunId: number, payload: StoreUrunYorumOlusturDto): Promise<StoreUrunYorumDto> {
+    const { data } = await apiClient.post<AppResponse<StoreUrunYorumDto>>(
+      `${STORE_BASE}/products/${urunId}/reviews`,
+      payload,
+    );
+    return unwrapData(data);
+  },
+
+  async markReviewHelpful(yorumId: number): Promise<StoreUrunYorumDto> {
+    const { data } = await apiClient.post<AppResponse<StoreUrunYorumDto>>(
+      `${STORE_BASE}/reviews/${yorumId}/helpful`,
     );
     return unwrapData(data);
   },

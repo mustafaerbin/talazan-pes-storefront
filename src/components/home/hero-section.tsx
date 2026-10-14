@@ -67,7 +67,7 @@ export function HeroSection({ section, config, featured }: HeroSectionProps) {
       <div className="grid min-h-[280px] md:min-h-[340px] md:grid-cols-[minmax(0,1fr)_minmax(240px,42%)]">
         <div className="flex flex-col justify-center px-5 py-6 sm:px-8 md:py-8">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">{config.firmaIsim}</p>
-          <h1 className="mt-2 line-clamp-2 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
+          <h1 className="mt-2 line-clamp-2 text-2xl font-semibold leading-tight tracking-tight text-foreground md:text-3xl">
             {activeSlide.baslik}
           </h1>
           {activeSlide.altBaslik && (
