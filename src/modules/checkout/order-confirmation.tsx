@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CHECKOUT_RESULT_KEY, LABELS, ROUTES } from "@/config/constants";
+import { CHECKOUT_GUEST_KEY, CHECKOUT_IDEMPOTENCY_KEY, CHECKOUT_RESULT_KEY, LABELS, ROUTES } from "@/config/constants";
 import { useAuthStore } from "@/hooks/use-auth-store";
+import { useCartStore } from "@/hooks/use-cart-store";
 import { useFirmaId } from "@/hooks/use-firma-id";
 import { getApiErrorMessage } from "@/api/client";
 import { storeService } from "@/services/store.service";
@@ -29,6 +30,7 @@ function readStoredOrder(): StoreSiparisSonucDto | null {
 function paymentLabel(order: StoreSiparisSonucDto) {
   if (order.odendi) return "Ödendi";
   if (order.odemeDurum === "KAPIDA_BEKLIYOR") return "Kapıda ödeme — henüz tahsil edilmedi";
+  if (order.odemeYontemi === "PAYTR") return "Kart ödemesi bekleniyor";
   if (order.odemeYontemi === "HAVALE_EFT" || order.odemeDurum === "BEKLEMEDE") {
     return "Havale bekleniyor — sipariş ödenmiş değil";
   }
@@ -39,6 +41,8 @@ export function OrderConfirmation() {
   const firmaId = useFirmaId();
   const user = useAuthStore((s) => s.user);
   const registerUser = useAuthStore((s) => s.register);
+  const clearCart = useCartStore((s) => s.clearCart);
+  const [paytrFail, setPaytrFail] = useState(false);
   const [order, setOrder] = useState<StoreSiparisSonucDto | null>(null);
   const [ready, setReady] = useState(false);
   const [siparisNo, setSiparisNo] = useState("");
@@ -48,9 +52,43 @@ export function OrderConfirmation() {
   const [claimed, setClaimed] = useState(false);
 
   useEffect(() => {
-    setOrder(readStoredOrder());
+    const stored = readStoredOrder();
+    const failed = new URLSearchParams(window.location.search).get("paytr") === "fail";
+    setOrder(stored);
+    setPaytrFail(failed);
     setReady(true);
-  }, []);
+    if (stored && !failed) {
+      sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
+      sessionStorage.removeItem(CHECKOUT_GUEST_KEY);
+      clearCart();
+    }
+  }, [clearCart]);
+
+  useEffect(() => {
+    if (!order?.siparisNo || order.odemeYontemi !== "PAYTR" || order.odendi || paytrFail) {
+      return;
+    }
+    let tries = 0;
+    const timer = window.setInterval(async () => {
+      tries += 1;
+      try {
+        const result = await storeService.trackOrder({
+          firmaId,
+          siparisNo: order.siparisNo!,
+          takipToken: order.takipToken,
+        });
+        const next = { ...order, ...result, takipToken: order.takipToken };
+        setOrder(next);
+        sessionStorage.setItem(CHECKOUT_RESULT_KEY, JSON.stringify(next));
+        if (next.odendi || tries >= 8) {
+          window.clearInterval(timer);
+        }
+      } catch {
+        if (tries >= 8) window.clearInterval(timer);
+      }
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [firmaId, order?.odendi, order?.odemeYontemi, order?.siparisNo, order?.takipToken, paytrFail]);
 
   const lookup = async (payload: { siparisNo: string; takipToken?: string }) => {
     setBusy(true);
@@ -138,10 +176,17 @@ export function OrderConfirmation() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Siparişiniz oluşturuldu</h1>
+        <h1 className="text-3xl font-bold">
+          {paytrFail ? "Ödeme alınamadı" : order.odendi ? "Ödemeniz alındı" : "Siparişiniz oluşturuldu"}
+        </h1>
         <p className="mt-2 text-muted-foreground">
           Sipariş no: <span className="font-semibold text-foreground">{order.siparisNo}</span>
         </p>
+        {paytrFail && (
+          <p className="mt-2 text-sm text-destructive">
+            Kart ödemesi tamamlanmadı. Sipariş ödenmiş değil. Ödemeyi tekrar denemek için sepete dönüp yeniden deneyebilirsiniz.
+          </p>
+        )}
       </div>
 
       <Card>

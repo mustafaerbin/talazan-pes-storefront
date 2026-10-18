@@ -9,8 +9,8 @@ import { getRequestSiteUrl, resolveFirmaId } from "@/lib/tenant";
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({

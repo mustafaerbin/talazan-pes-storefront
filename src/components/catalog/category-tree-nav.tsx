@@ -26,7 +26,7 @@ export function CategoryTreeNav({ categories, activeId, isLoading, isError }: Ca
 
   return (
     <aside className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
-      <div className="overflow-hidden rounded-[var(--radius-card)] border border-border bg-card">
+      <div className="lg:border-0">
         <button
           type="button"
           className="flex min-h-11 w-full items-center justify-between px-4 py-3 text-sm font-semibold text-foreground lg:hidden"

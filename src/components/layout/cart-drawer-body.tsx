@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Share2, ShoppingCart, Trash2, Truck, X } from "lucide-react";
+import { Minus, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LABELS, ROUTES } from "@/config/constants";
 import { useQuery } from "@tanstack/react-query";
@@ -19,8 +19,8 @@ interface CartDrawerBodyProps {
 
 function variantLine(item: CartItem): string | null {
   const parts: string[] = [];
-  if (item.renk) parts.push(`RENK: ${item.renk.toUpperCase()}`);
-  if (item.beden) parts.push(`BEDEN: ${item.beden.toUpperCase()}`);
+  if (item.renk) parts.push(item.renk);
+  if (item.beden) parts.push(item.beden);
   return parts.length ? parts.join(" / ") : null;
 }
 
@@ -37,59 +37,24 @@ export function CartDrawerBody({ onClose }: CartDrawerBodyProps) {
   });
   const standardFee = config?.kargoUcreti ?? 0;
   const threshold = config?.ucretsizKargoLimiti ?? 0;
-  const freeShippingProgress = threshold > 0 ? Math.min(100, (subtotal / threshold) * 100) : 100;
-
-  const handleShare = async () => {
-    const url = `${window.location.origin}${ROUTES.cart}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "Sepetim", url });
-        return;
-      } catch {
-        return;
-      }
-    }
-    await navigator.clipboard.writeText(url);
-  };
 
   return (
     <>
-      <header className="flex items-center justify-between border-b border-border px-5 py-4">
-        <div className="flex items-center gap-2.5">
-          <ShoppingCart className="size-5 text-primary" />
-          <h2 className="text-lg font-extrabold tracking-tight">Sepetim</h2>
-          {itemCount > 0 && (
-            <span className="flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
-              {itemCount}
-            </span>
-          )}
+      <header className="flex items-start justify-between px-5 py-5">
+        <div>
+          <h2 className="text-lg font-semibold">Sepetim {itemCount > 0 ? `(${itemCount})` : ""}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {items.length ? "Seçtiğiniz ürünler" : LABELS.emptyCart}
+          </p>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="secondary"
-            size="icon"
-            className="rounded-full bg-primary/10 text-primary hover:bg-primary/15"
-            onClick={handleShare}
-            aria-label="Paylaş"
-          >
-            <Share2 className="size-4" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="rounded-full bg-primary/10 text-primary hover:bg-primary/15"
-            onClick={onClose}
-            aria-label="Kapat"
-          >
-            <X className="size-5" />
-          </Button>
-        </div>
+        <button type="button" onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground" aria-label="Kapat">
+          <X className="size-5" />
+        </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-5">
         {items.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 py-16 text-center">
-            <ShoppingCart className="size-10 text-muted-foreground/50" />
             <p className="text-muted-foreground">{LABELS.emptyCart}</p>
             <Button asChild>
               <Link href={ROUTES.home} onClick={onClose}>
@@ -98,94 +63,60 @@ export function CartDrawerBody({ onClose }: CartDrawerBodyProps) {
             </Button>
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="divide-y divide-border">
             {items.map((item) => {
-              const hasDiscount =
-                item.listeTutari != null && item.listeTutari > item.birimFiyat;
-              const percent = hasDiscount
-                ? Math.round(((item.listeTutari! - item.birimFiyat) / item.listeTutari!) * 100)
-                : 0;
-              const lowStock = (item.stokMiktari ?? 0) > 0 && (item.stokMiktari ?? 0) <= 5;
               const variant = variantLine(item);
               return (
-                <li
-                  key={item.urunId}
-                  className="rounded-[var(--radius-card)] border border-border/70 bg-card p-3 shadow-card"
-                >
-                  <div className="flex gap-3">
-                    <Link
-                      href={ROUTES.product(item.slug ?? String(item.urunId))}
-                      onClick={onClose}
-                      className="relative size-[72px] shrink-0 overflow-hidden rounded-xl bg-secondary"
-                    >
-                      {item.resim ? (
-                        <Image src={item.resim} alt={item.isim} fill sizes="72px" className="object-cover" />
-                      ) : null}
-                      {hasDiscount && (
-                        <span className="absolute bottom-1 left-1 rounded-full bg-destructive px-1.5 py-0.5 text-[9px] font-bold text-white">
-                          %{percent} indirim
-                        </span>
-                      )}
-                    </Link>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <Link
-                          href={ROUTES.product(item.slug ?? String(item.urunId))}
-                          onClick={onClose}
-                          className="line-clamp-2 text-sm font-bold leading-snug hover:text-primary"
-                        >
-                          {item.isim}
-                        </Link>
+                <li key={item.urunId} className="flex gap-3 py-4">
+                  <Link
+                    href={ROUTES.product(item.slug ?? String(item.urunId))}
+                    onClick={onClose}
+                    className="relative size-16 shrink-0 overflow-hidden bg-secondary"
+                  >
+                    {item.resim ? (
+                      <Image src={item.resim} alt={item.isim} fill sizes="64px" className="object-cover" />
+                    ) : null}
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link
+                        href={ROUTES.product(item.slug ?? String(item.urunId))}
+                        onClick={onClose}
+                        className="line-clamp-2 text-sm font-medium leading-snug"
+                      >
+                        {item.isim}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.urunId)}
+                        className="p-1 text-muted-foreground hover:text-foreground"
+                        aria-label="Kaldır"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                    {variant && <p className="mt-1 text-xs text-muted-foreground">{variant}</p>}
+                    <div className="mt-3 flex items-center justify-between">
+                      <p className="text-sm font-semibold">{formatPrice(item.birimFiyat)}</p>
+                      <div className="flex h-8 items-center border border-border">
                         <button
                           type="button"
-                          onClick={() => removeItem(item.urunId)}
-                          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-destructive"
-                          aria-label="Kaldır"
+                          className="flex size-8 items-center justify-center"
+                          onClick={() => updateQuantity(item.urunId, item.adet - 1)}
+                          aria-label="Azalt"
                         >
-                          <Trash2 className="size-4" />
+                          <Minus className="size-3.5" />
+                        </button>
+                        <span className="w-6 text-center text-sm">{item.adet}</span>
+                        <button
+                          type="button"
+                          className="flex size-8 items-center justify-center"
+                          onClick={() => updateQuantity(item.urunId, item.adet + 1)}
+                          aria-label="Artır"
+                        >
+                          <Plus className="size-3.5" />
                         </button>
                       </div>
-                      {variant && (
-                        <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                          {variant}
-                        </p>
-                      )}
-                      {lowStock && (
-                        <p className="mt-1.5 inline-flex rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive">
-                          Stokta son {item.stokMiktari} adet kaldı
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="flex h-9 items-center rounded-full border border-border px-1">
-                      <button
-                        type="button"
-                        className="flex size-7 items-center justify-center rounded-full hover:bg-secondary"
-                        onClick={() => updateQuantity(item.urunId, item.adet - 1)}
-                        aria-label="Azalt"
-                      >
-                        <Minus className="size-3.5" />
-                      </button>
-                      <span className="w-7 text-center text-sm font-semibold">{item.adet}</span>
-                      <button
-                        type="button"
-                        className="flex size-7 items-center justify-center rounded-full hover:bg-secondary"
-                        onClick={() => updateQuantity(item.urunId, item.adet + 1)}
-                        aria-label="Artır"
-                      >
-                        <Plus className="size-3.5" />
-                      </button>
-                    </div>
-                    <div className="text-right">
-                      {hasDiscount && (
-                        <p className="text-xs text-muted-foreground line-through">
-                          {formatPrice(item.listeTutari! * item.adet)}
-                        </p>
-                      )}
-                      <p className={hasDiscount ? "text-sm font-extrabold text-destructive" : "text-sm font-extrabold"}>
-                        {formatPrice(item.birimFiyat * item.adet)}
-                      </p>
                     </div>
                   </div>
                 </li>
@@ -196,35 +127,22 @@ export function CartDrawerBody({ onClose }: CartDrawerBodyProps) {
       </div>
 
       {items.length > 0 && (
-        <footer className="border-t border-border bg-card">
-          <div className="border-b border-primary/15 bg-primary/5 px-5 py-3">
-            <p className="flex items-center gap-2 text-xs font-medium text-foreground/80">
-              <Truck className="size-4 text-primary" />
-              {shippingMessage(subtotal, threshold, standardFee)}
-            </p>
-            {threshold > 0 && (
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-primary/15">
-                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${freeShippingProgress}%` }} />
-              </div>
-            )}
+        <footer className="space-y-3 border-t border-border px-5 py-5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{LABELS.subtotal}</span>
+            <span className="font-semibold">{formatPrice(subtotal)}</span>
           </div>
-          <div className="flex items-center gap-3 px-5 py-4">
-            <div className="relative flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <ShoppingCart className="size-5" />
-              <span className="absolute -right-0.5 -top-0.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                {itemCount}
-              </span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Toplam</p>
-              <p className="text-lg font-extrabold leading-none">{formatPrice(subtotal)}</p>
-            </div>
-            <Button size="lg" className="shrink-0 font-bold" asChild>
-              <Link href={ROUTES.checkout} onClick={onClose}>
-                {LABELS.proceedToCheckout}
-              </Link>
-            </Button>
-          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {shippingMessage(subtotal, threshold, standardFee)}
+          </p>
+          <Button size="lg" className="h-12 w-full" asChild>
+            <Link href={ROUTES.checkout} onClick={onClose}>
+              {LABELS.proceedToCheckout}
+            </Link>
+          </Button>
+          <button type="button" className="w-full py-1 text-sm text-muted-foreground hover:text-foreground" onClick={onClose}>
+            {LABELS.continueShopping}
+          </button>
         </footer>
       )}
     </>

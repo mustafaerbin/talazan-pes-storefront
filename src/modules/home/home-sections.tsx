@@ -49,8 +49,8 @@ function HomeProductFeed({
   if (!loading && products.length === 0) return null;
 
   return (
-    <section className="space-y-4">
-      <SectionHeader title={title} subtitle={subtitle} href={viewAllHref} />
+    <section className="space-y-6">
+      <SectionHeader title={title} subtitle={subtitle} href={viewAllHref} linkLabel="Tüm ürünleri gör" />
       {loading ? (
         <ProductGridSkeleton count={4} />
       ) : (
@@ -108,21 +108,24 @@ export function HomeSections({
   brands,
   loading,
 }: HomeSectionsProps) {
+  const activeSections = sections.filter((section) => section.aktif);
+  const hasHero = activeSections.some((section) => section.type === "hero");
+
   return (
-    <div className="space-y-12 pb-8 md:space-y-16">
-      {sections
-        .filter((section) => section.aktif)
-        .map((section) => {
+    <div className="pb-16">
+      {activeSections.map((section) => {
           switch (section.type) {
             case "hero":
               return (
-                <HeroSection
-                  key={section.id}
-                  section={section}
-                  config={config}
-                  categories={categories}
-                  featured={productPools.featured}
-                />
+                <div key={section.id}>
+                  <HeroSection
+                    section={section}
+                    config={config}
+                    categories={categories}
+                    featured={productPools.featured}
+                  />
+                  <CategoryGrid categories={categories} />
+                </div>
               );
 
             case "featured":
@@ -130,19 +133,20 @@ export function HomeSections({
               const source = section.ayarlar?.source ?? "featured";
               const limit = Number(section.ayarlar?.limit ?? 12);
               return (
-                <HomeProductFeed
-                  key={section.id}
-                  title={section.baslik ?? LABELS.featuredProducts}
-                  subtitle={section.altBaslik}
-                  viewAllHref={viewAllForSource(source)}
-                  products={resolveProducts(source, productPools, limit)}
-                  loading={loading}
-                />
+                <div key={section.id} className="container mx-auto px-4 py-12">
+                  <HomeProductFeed
+                    title={section.baslik ?? "Ürünleri keşfedin"}
+                    subtitle={section.altBaslik}
+                    viewAllHref={viewAllForSource(source)}
+                    products={resolveProducts(source, productPools, limit)}
+                    loading={loading}
+                  />
+                </div>
               );
             }
 
             case "categories":
-              return (
+              return hasHero ? null : (
                 <CategoryGrid
                   key={section.id}
                   categories={categories}
@@ -153,7 +157,7 @@ export function HomeSections({
 
             case "brands":
               return brands.length > 0 ? (
-                <section key={section.id} className="space-y-6">
+                <section key={section.id} className="container mx-auto space-y-6 px-4 py-12">
                   <SectionHeader
                     title={section.baslik ?? LABELS.brands}
                     subtitle={section.altBaslik}
@@ -179,20 +183,27 @@ export function HomeSections({
                 (item) => item.resimUrl,
               );
               return promotions.length ? (
-                <PromotionBanner key={section.id} promotions={promotions} />
+                <div key={section.id} className="container mx-auto px-4 py-8">
+                  <PromotionBanner promotions={promotions} />
+                </div>
               ) : null;
             }
 
             case "features":
-              return <FeaturesSection key={section.id} />;
+              return (
+                <div key={section.id} className="container mx-auto px-4">
+                  <FeaturesSection />
+                </div>
+              );
 
             case "newsletter":
               return (
-                <NewsletterSection
-                  key={section.id}
-                  title={section.baslik}
-                  subtitle={section.altBaslik}
-                />
+                <div key={section.id} className="container mx-auto px-4 py-8">
+                  <NewsletterSection
+                    title={section.baslik}
+                    subtitle={section.altBaslik}
+                  />
+                </div>
               );
 
             default:
@@ -200,13 +211,15 @@ export function HomeSections({
           }
         })}
 
-      {!sections.some((s) => s.aktif && (s.type === "featured" || s.type === "product_carousel")) && (
-        <HomeProductFeed
-          title={LABELS.featuredProducts}
-          viewAllHref={ROUTES.search}
-          products={productPools.featured.slice(0, 8)}
-          loading={loading}
-        />
+      {!activeSections.some((s) => s.type === "featured" || s.type === "product_carousel") && (
+        <div className="container mx-auto px-4 py-12">
+          <HomeProductFeed
+            title="Ürünleri keşfedin"
+            viewAllHref={ROUTES.search}
+            products={productPools.featured.slice(0, 8)}
+            loading={loading}
+          />
+        </div>
       )}
     </div>
   );

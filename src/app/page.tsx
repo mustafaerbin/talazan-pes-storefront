@@ -34,17 +34,15 @@ export default async function HomePage({
 
   return (
     <StoreLayoutShell searchParams={searchParams} categories={categories} fullWidth>
-      <div className="container mx-auto px-4 py-6">
-        <JsonLd data={buildOrganizationJsonLd(config, siteUrl)} />
-        <HomeSections
-          firmaId={firmaId}
-          config={config}
-          sections={sections}
-          productPools={productPools}
-          categories={categories}
-          brands={brands}
-        />
-      </div>
+      <JsonLd data={buildOrganizationJsonLd(config, siteUrl)} />
+      <HomeSections
+        firmaId={firmaId}
+        config={config}
+        sections={sections}
+        productPools={productPools}
+        categories={categories}
+        brands={brands}
+      />
     </StoreLayoutShell>
   );
 }

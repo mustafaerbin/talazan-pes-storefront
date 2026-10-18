@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ROUTES } from "@/config/constants";
 import type { FirmaKategoriDto, FirmaUrunDto, HeroSlide, HomeSection, StoreConfigDto } from "@/types/api";
 
@@ -23,10 +22,8 @@ function buildSlides(section: HomeSection, config: StoreConfigDto, featured: Fir
   const productSlides = featured.slice(0, 3).map((product) => ({
     baslik: product.isim,
     altBaslik: section.altBaslik ?? config.ayarlar?.siteAciklama,
-    ctaMetin: "Ürünü İncele",
+    ctaMetin: "Koleksiyonu keşfet",
     ctaUrl: ROUTES.product(product.slug ?? String(product.id)),
-    ikinciCtaMetin: "Tüm Ürünler",
-    ikinciCtaUrl: ROUTES.search,
     resimUrl: product.resim,
   }));
 
@@ -34,12 +31,10 @@ function buildSlides(section: HomeSection, config: StoreConfigDto, featured: Fir
 
   return [
     {
-      baslik: section.baslik ?? "Yeni Sezon Koleksiyonu",
+      baslik: section.baslik || config.ayarlar?.siteBaslik || config.firmaIsim,
       altBaslik: section.altBaslik ?? config.ayarlar?.siteAciklama,
-      ctaMetin: "Alışverişe Başla",
+      ctaMetin: "Koleksiyonu keşfet",
       ctaUrl: ROUTES.search,
-      ikinciCtaMetin: "Kategoriler",
-      ikinciCtaUrl: ROUTES.search,
     },
   ];
 }
@@ -55,79 +50,53 @@ export function HeroSection({ section, config, featured }: HeroSectionProps) {
     if (slides.length <= 1) return;
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % slides.length);
-    }, 6000);
+    }, 7000);
     return () => window.clearInterval(timer);
   }, [slides.length]);
 
   const activeSlide = slides[activeIndex] ?? slides[0];
   if (!activeSlide) return null;
 
+  const kicker = [config.firmaIsim, config.ayarlar?.siteBaslik]
+    .filter((value, index, list) => value && list.findIndex((item) => item?.toLocaleLowerCase("tr") === value.toLocaleLowerCase("tr")) === index)
+    .join(" · ");
+
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="grid min-h-[280px] md:min-h-[340px] md:grid-cols-[minmax(0,1fr)_minmax(240px,42%)]">
-        <div className="flex flex-col justify-center px-5 py-6 sm:px-8 md:py-8">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">{config.firmaIsim}</p>
-          <h1 className="mt-2 line-clamp-2 text-2xl font-semibold leading-tight tracking-tight text-foreground md:text-3xl">
+    <section className="bg-[#1A1A1A] text-white">
+      <div className="grid md:min-h-[420px] md:grid-cols-2 lg:min-h-[460px]">
+        <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-16">
+          {kicker && (
+            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/55">{kicker}</p>
+          )}
+          <h1 className="mt-4 max-w-xl text-[1.75rem] font-semibold leading-tight tracking-tight sm:text-4xl">
             {activeSlide.baslik}
           </h1>
           {activeSlide.altBaslik && (
-            <p className="mt-3 line-clamp-2 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70 sm:text-[15px]">
               {activeSlide.altBaslik}
             </p>
           )}
-          <div className="mt-5 flex flex-wrap items-center gap-4">
-            {activeSlide.ctaUrl && (
-              <Button asChild>
-                <Link href={activeSlide.ctaUrl}>{activeSlide.ctaMetin ?? "Ürünü İncele"}</Link>
-              </Button>
-            )}
-            {activeSlide.ikinciCtaUrl && (
-              <Link href={activeSlide.ikinciCtaUrl} className="text-sm font-semibold text-primary hover:underline">
-                {activeSlide.ikinciCtaMetin ?? "Tüm Ürünler"}
+          {activeSlide.ctaUrl && (
+            <div className="mt-8">
+              <Link
+                href={activeSlide.ctaUrl}
+                className="inline-flex h-11 items-center gap-2 bg-white px-5 text-sm font-medium text-[#242424] transition-opacity hover:opacity-90"
+              >
+                {activeSlide.ctaMetin ?? "Koleksiyonu keşfet"}
+                <span aria-hidden>→</span>
               </Link>
-            )}
-          </div>
-          {slides.length > 1 && (
-            <div className="mt-6 flex items-center gap-3">
-              <button
-                type="button"
-                className="inline-flex size-8 items-center justify-center rounded-full border border-border text-foreground hover:border-primary hover:text-primary"
-                onClick={() => setActiveIndex((activeIndex - 1 + slides.length) % slides.length)}
-                aria-label="Önceki slayt"
-              >
-                <ArrowLeft className="size-4" />
-              </button>
-              <button
-                type="button"
-                className="inline-flex size-8 items-center justify-center rounded-full border border-border text-foreground hover:border-primary hover:text-primary"
-                onClick={() => setActiveIndex((activeIndex + 1) % slides.length)}
-                aria-label="Sonraki slayt"
-              >
-                <ArrowRight className="size-4" />
-              </button>
-              <div className="flex items-center gap-1.5">
-                {slides.map((_, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    aria-label={`Slayt ${index + 1}`}
-                    onClick={() => setActiveIndex(index)}
-                    className={`size-1.5 rounded-full ${index === activeIndex ? "bg-primary" : "bg-border"}`}
-                  />
-                ))}
-              </div>
             </div>
           )}
         </div>
 
-        <div className="relative min-h-[200px] bg-secondary/40">
+        <div className="relative min-h-[240px] bg-black md:min-h-full">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIndex}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.35 }}
               className="absolute inset-0"
             >
               {activeSlide.resimUrl ? (
@@ -135,13 +104,36 @@ export function HeroSection({ section, config, featured }: HeroSectionProps) {
                   src={activeSlide.resimUrl}
                   alt={activeSlide.baslik}
                   fill
-                  className="object-contain p-4"
-                  sizes="(max-width: 768px) 100vw, 40vw"
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   priority={activeIndex === 0}
                 />
-              ) : null}
+              ) : (
+                <div className="h-full w-full bg-[#1A1A1A]" />
+              )}
             </motion.div>
           </AnimatePresence>
+
+          {slides.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="absolute left-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#242424]"
+                onClick={() => setActiveIndex((activeIndex - 1 + slides.length) % slides.length)}
+                aria-label="Önceki slayt"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                className="absolute right-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#242424]"
+                onClick={() => setActiveIndex((activeIndex + 1) % slides.length)}
+                aria-label="Sonraki slayt"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </section>

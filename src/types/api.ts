@@ -95,6 +95,7 @@ export interface StoreConfigDto {
   menuler?: SiteMenuDto[];
   ucretsizKargoLimiti?: number;
   kargoUcreti?: number;
+  paytrAktif?: boolean;
 }
 
 export interface FirmaKategoriDto {
@@ -332,6 +333,8 @@ export interface StoreSiparisSonucDto {
   faturaAdres?: string;
   fiyatGuncellendi?: boolean;
   uyari?: string;
+  paytrIframeToken?: string;
+  paytrIframeUrl?: string;
   kalemler?: StoreSiparisKalemDto[];
 }
 

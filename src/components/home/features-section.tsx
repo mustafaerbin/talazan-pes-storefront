@@ -1,42 +1,26 @@
 "use client";
 
-import { motion } from "framer-motion";
-import {
-  Headphones,
-  PackageCheck,
-  RefreshCcw,
-  ShieldCheck,
-  Truck,
-} from "lucide-react";
+import { RefreshCcw, ShieldCheck, Truck } from "lucide-react";
 import { LABELS } from "@/config/constants";
 
 const FEATURES = [
-  { icon: Truck, title: LABELS.fastDelivery, desc: "Hızlı ve güvenilir teslimat" },
-  { icon: ShieldCheck, title: LABELS.securePayment, desc: "256-bit SSL güvenli ödeme" },
-  { icon: RefreshCcw, title: LABELS.easyReturns, desc: "14 gün içinde kolay iade" },
-  { icon: Headphones, title: LABELS.support247, desc: "Her an yanınızdayız" },
-  { icon: PackageCheck, title: LABELS.originalProduct, desc: "%100 orijinal ürün garantisi" },
+  { icon: Truck, title: LABELS.fastDelivery, desc: "Siparişleriniz özenle hazırlanır ve kargoya verilir." },
+  { icon: ShieldCheck, title: LABELS.securePayment, desc: "Ödeme bilgileriniz güvenli altyapı ile iletilir." },
+  { icon: RefreshCcw, title: LABELS.easyReturns, desc: "İade ve değişim süreçleri sipariş detayından takip edilir." },
 ];
 
 export function FeaturesSection() {
   return (
-    <section className="rounded-2xl border border-border bg-card px-4 py-6 md:px-6">
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-        {FEATURES.map((feature, index) => (
-          <motion.div
-            key={feature.title}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.05, duration: 0.35 }}
-            className="group flex flex-col items-center text-center"
-          >
-            <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary shadow-card transition-all duration-300 group-hover:-translate-y-0.5 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-hover">
-              <feature.icon className="size-6" />
+    <section className="border-t border-border">
+      <div className="grid gap-8 py-10 sm:grid-cols-3">
+        {FEATURES.map((feature) => (
+          <div key={feature.title} className="flex gap-3">
+            <feature.icon className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+            <div>
+              <h3 className="text-sm font-medium">{feature.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{feature.desc}</p>
             </div>
-            <h3 className="text-sm font-bold">{feature.title}</h3>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{feature.desc}</p>
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>

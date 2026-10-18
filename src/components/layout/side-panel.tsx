@@ -37,7 +37,7 @@ export function SidePanel() {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-foreground/40 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-foreground/30"
             aria-label="Paneli kapat"
             onClick={close}
           />

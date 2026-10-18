@@ -59,7 +59,7 @@ const checkoutSchema = z
     sirketUnvani: z.string().optional(),
     vergiDairesi: z.string().optional(),
     vergiNo: z.string().optional(),
-    odemeYontemi: z.enum(["HAVALE_EFT", "KAPIDA_ODEME"]),
+    odemeYontemi: z.enum(["HAVALE_EFT", "KAPIDA_ODEME", "PAYTR"]),
   })
   .superRefine((data, ctx) => {
     if (!data.faturaAyni) {
@@ -113,6 +113,7 @@ function FieldError({ message }: { message?: string }) {
 function paymentStatus(order: StoreSiparisSonucDto) {
   if (order.odendi) return "Ödendi";
   if (order.odemeDurum === "KAPIDA_BEKLIYOR") return "Kapıda ödeme — henüz tahsil edilmedi";
+  if (order.odemeYontemi === "PAYTR") return "Kart ödemesi bekleniyor";
   return "Ödeme bekleniyor — sipariş ödenmiş değil";
 }
 
@@ -131,6 +132,7 @@ export function CheckoutView() {
   const [step, setStep] = useState<CheckoutStep>("gate");
   const [guest, setGuest] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [paytrIframeUrl, setPaytrIframeUrl] = useState<string | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const addressFilled = useRef(false);
   const navIntent = useRef<CheckoutStep | null>(null);
@@ -248,6 +250,19 @@ export function CheckoutView() {
     enabled: !!previewPayload && activeStep !== "gate",
   });
 
+  const storeConfig = useQuery({
+    queryKey: ["store-config", firmaId],
+    queryFn: () => storeService.getConfig(firmaId),
+    enabled: !!firmaId,
+  });
+  const paytrAktif = !!storeConfig.data?.paytrAktif;
+
+  useEffect(() => {
+    if (storeConfig.isSuccess && !paytrAktif && odemeYontemi === "PAYTR") {
+      setValue("odemeYontemi", "HAVALE_EFT");
+    }
+  }, [odemeYontemi, paytrAktif, setValue, storeConfig.isSuccess]);
+
   if (!isHydrated) return null;
 
   if (items.length === 0) {
@@ -268,7 +283,9 @@ export function CheckoutView() {
       ? "Ödeme Adımına Geç"
       : isSubmitting
         ? "Sipariş oluşturuluyor..."
-        : `Siparişi Tamamla${total != null ? ` · ${formatPrice(total)}` : ""}`;
+        : odemeYontemi === "PAYTR"
+          ? `Kart ile öde${total != null ? ` · ${formatPrice(total)}` : ""}`
+          : `Siparişi Tamamla${total != null ? ` · ${formatPrice(total)}` : ""}`;
 
   const checkoutHref = (adim?: "teslimat" | "odeme") => {
     const params = new URLSearchParams(window.location.search);
@@ -375,8 +392,6 @@ export function CheckoutView() {
     }
 
     sessionStorage.setItem(CHECKOUT_RESULT_KEY, JSON.stringify(order));
-    sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
-    sessionStorage.removeItem(CHECKOUT_GUEST_KEY);
     addOrder({
       siparisNo: order.siparisNo ?? "",
       tarih: new Date().toISOString(),
@@ -396,6 +411,12 @@ export function CheckoutView() {
         firmaUrunId: kalem.firmaUrunId ?? items[index]?.urunId,
       })),
     });
+    if (data.odemeYontemi === "PAYTR" && order.paytrIframeUrl) {
+      setPaytrIframeUrl(order.paytrIframeUrl);
+      return;
+    }
+    sessionStorage.removeItem(CHECKOUT_IDEMPOTENCY_KEY);
+    sessionStorage.removeItem(CHECKOUT_GUEST_KEY);
     clearCart();
     router.push(ROUTES.orderConfirmation);
   };
@@ -706,19 +727,43 @@ export function CheckoutView() {
                   </span>
                 </span>
               </label>
+              {paytrAktif && (
+                <label className="flex cursor-pointer gap-3 rounded-[var(--radius-card)] border border-border p-4">
+                  <input type="radio" value="PAYTR" {...register("odemeYontemi")} />
+                  <span>
+                    <span className="block font-semibold">Kredi / banka kartı</span>
+                    <span className="mt-1 block text-sm text-muted-foreground">
+                      PayTR altyapısı ile güvenli ödeme. Kart bilgisi bu sitede saklanmaz.
+                    </span>
+                  </span>
+                </label>
+              )}
               {odemeYontemi === "HAVALE_EFT" && (
                 <p className="text-sm text-muted-foreground">
                   Havale bilgisi mağaza tarafından iletilir. Bu ekranda kart numarası veya CVV alınmaz.
                 </p>
+              )}
+              {paytrIframeUrl && (
+                <div className="overflow-hidden rounded-[var(--radius-card)] border border-border">
+                  <iframe
+                    src={paytrIframeUrl}
+                    title="PayTR ödeme"
+                    className="w-full border-0"
+                    style={{ minHeight: 620 }}
+                    allow="payment"
+                  />
+                </div>
               )}
               {submitError && <p className="text-sm text-destructive">{submitError}</p>}
               <div className="hidden gap-3 lg:flex">
                 <Button type="button" variant="outline" onClick={backToDelivery}>
                   Teslimata dön
                 </Button>
-                <Button type="submit" size="lg" className="flex-1" disabled={isSubmitting || preview.isLoading || preview.isError || total == null}>
-                  {buttonLabel}
-                </Button>
+                {!paytrIframeUrl && (
+                  <Button type="submit" size="lg" className="flex-1" disabled={isSubmitting || preview.isLoading || preview.isError || total == null}>
+                    {buttonLabel}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -815,9 +860,11 @@ export function CheckoutView() {
             <Button type="button" variant="outline" className="h-12" onClick={backToDelivery}>
               Geri
             </Button>
-            <Button type="submit" className="h-12 flex-1" disabled={isSubmitting || preview.isLoading || preview.isError || total == null}>
-              {buttonLabel}
-            </Button>
+            {!paytrIframeUrl && (
+              <Button type="submit" className="h-12 flex-1" disabled={isSubmitting || preview.isLoading || preview.isError || total == null}>
+                {buttonLabel}
+              </Button>
+            )}
           </div>
         )}
       </div>

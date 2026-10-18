@@ -89,13 +89,13 @@ export function MegaMenu({ categories }: MegaMenuProps) {
           setOpen((value) => !value);
           setSearch("");
         }}
-        className="inline-flex items-center gap-2 rounded-[var(--radius-btn)] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+        className="inline-flex items-center gap-2 pb-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
         aria-expanded={open}
         aria-controls={panelId}
         aria-haspopup="dialog"
       >
         <Grid3x3 className="size-4" />
-        {LABELS.allCategories}
+        {LABELS.categories}
       </button>
 
       {open && (
@@ -103,7 +103,7 @@ export function MegaMenu({ categories }: MegaMenuProps) {
           id={panelId}
           role="dialog"
           aria-label={LABELS.allCategories}
-          className="fixed z-[60] flex max-h-[min(32rem,calc(100vh-6rem))] flex-col overflow-hidden rounded-xl border border-border bg-card"
+          className="fixed z-[60] flex max-h-[min(32rem,calc(100vh-6rem))] flex-col overflow-hidden rounded-md border border-border bg-background"
           style={{ top: box.top, left: box.left, width: box.width }}
         >
           <div className="border-b border-border p-3">

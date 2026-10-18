@@ -14,7 +14,6 @@ import {
   Share2,
   ShoppingBag,
   Star,
-  Truck,
   X,
 } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
@@ -267,17 +266,13 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
   const defaultTab = tabs[0]?.id ?? "reviews";
   const currentTab = tabs.some((t) => t.id === activeTab) ? activeTab : defaultTab;
 
-  const stockLabel = !inStock
-    ? "Tükendi"
-    : stock <= 5
-      ? `Stokta · Son ${stock} ürün`
-      : "Stokta";
+  const stockLabel = !inStock ? "Tükendi" : "Stokta";
 
   const addToCartButton = (
     <Button
       type="button"
       size="lg"
-      className="h-12 w-full text-base font-bold"
+      className="h-12 w-full"
       disabled={!inStock || adding}
       onClick={handleAddToCart}
     >
@@ -308,8 +303,8 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
                   type="button"
                   onClick={() => setImageIndex(index)}
                   className={cn(
-                    "relative aspect-square w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-card sm:aspect-[3/4] sm:w-full",
-                    index === imageIndex ? "border-primary" : "border-transparent hover:border-border",
+                    "relative aspect-square w-16 shrink-0 overflow-hidden border bg-secondary sm:aspect-[3/4] sm:w-full",
+                    index === imageIndex ? "border-foreground" : "border-transparent hover:border-border",
                   )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -321,7 +316,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
 
           <div
             className={cn(
-              "relative order-1 min-h-[320px] flex-1 overflow-hidden rounded-[var(--radius-card)] border border-border/70 bg-card shadow-card sm:order-2 sm:min-h-full",
+              "relative order-1 min-h-[320px] flex-1 overflow-hidden bg-secondary sm:order-2 sm:min-h-full",
               activeImage && "group",
             )}
           >
@@ -342,7 +337,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
               <button
                 type="button"
                 onClick={() => setZoomed(true)}
-                className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full border border-border bg-card shadow-card"
+                className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-background"
                 aria-label="Büyüt"
               >
                 <Search className="size-4" />
@@ -354,7 +349,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
                 <button
                   type="button"
                   onClick={showPrev}
-                  className="absolute left-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 shadow-card"
+                  className="absolute left-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-background"
                   aria-label="Önceki görsel"
                 >
                   <ChevronLeft className="size-5" />
@@ -362,7 +357,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
                 <button
                   type="button"
                   onClick={showNext}
-                  className="absolute right-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 shadow-card"
+                  className="absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-background"
                   aria-label="Sonraki görsel"
                 >
                   <ChevronRight className="size-5" />
@@ -371,8 +366,8 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
             )}
 
             {hasDiscount && (
-              <span className="absolute bottom-4 right-4 rounded-full bg-destructive px-2.5 py-1 text-[11px] font-bold text-white">
-                %{percent} {LABELS.discountBadge.toLowerCase()}
+              <span className="absolute bottom-4 left-4 bg-background px-2 py-1 text-[11px] font-medium">
+                %{percent} indirim
               </span>
             )}
           </div>
@@ -380,14 +375,14 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
 
         {/* Satın alma */}
         <section className="flex h-full min-h-0">
-          <div className="flex h-full w-full flex-col rounded-[var(--radius-card)] border border-border/70 bg-card p-6 shadow-card md:p-7">
+          <div className="flex h-full w-full flex-col md:pt-2">
             {current.firmaMarkaIsim && (
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 {current.firmaMarkaIsim}
               </p>
             )}
 
-            <h1 className="mt-2 line-clamp-3 text-xl font-bold leading-snug tracking-tight md:text-2xl">
+            <h1 className="mt-2 line-clamp-3 text-xl font-semibold leading-snug tracking-tight md:text-2xl">
               {current.isim}
             </h1>
 
@@ -398,25 +393,21 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
             )}
 
             {sku && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {LABELS.sku}: <span className="font-medium text-foreground/80">{sku}</span>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Ürün kodu: {sku}
+              </p>
+            )}
+            {description && (
+              <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                {description.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}
               </p>
             )}
 
-            <div className="mt-5 space-y-1">
+            <div className="mt-5 flex flex-wrap items-baseline gap-3">
+              <p className="text-2xl font-semibold tracking-tight">{formatTl(sale)}</p>
               {hasDiscount && list != null && (
                 <p className="text-base text-muted-foreground line-through">{formatTl(list)}</p>
               )}
-              <div className="flex flex-wrap items-center gap-3">
-                <p className={cn("text-2xl font-extrabold tracking-tight text-foreground", hasDiscount && "text-destructive")}>
-                  {formatTl(sale)}
-                </p>
-                {hasDiscount && (
-                  <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-bold text-destructive">
-                    %{percent} indirim
-                  </span>
-                )}
-              </div>
             </div>
 
             {variantGroups.length > 0 && (
@@ -449,10 +440,10 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
                             type="button"
                             onClick={() => selectVariant(group.key, value)}
                             className={cn(
-                              "inline-flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors",
+                              "inline-flex items-center gap-2 border px-3 py-1.5 text-sm transition-colors",
                               selected
-                                ? "border-primary bg-primary/10 text-foreground"
-                                : "border-border bg-background text-foreground hover:border-primary/50",
+                                ? "border-foreground bg-foreground text-background"
+                                : "border-border bg-background text-foreground hover:border-foreground",
                               sampleStock <= 0 && "opacity-50",
                             )}
                           >
@@ -480,12 +471,8 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
               {stockLabel}
             </p>
 
-            <div className="mt-5 flex gap-3 rounded-[var(--radius-card)] border border-border/70 bg-secondary/30 p-4 text-sm">
-              <Truck className="mt-0.5 size-4 shrink-0 text-primary" />
-              <div>
-                <p className="font-semibold">{productHasFreeShipping ? LABELS.freeShipping : "Kargo"}</p>
-                <p className="text-muted-foreground">{shippingNote}</p>
-              </div>
+            <div className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
+              <p>{productHasFreeShipping ? LABELS.freeShipping : shippingNote}</p>
             </div>
 
             <div className={cn("mt-5 items-stretch gap-3", embedded ? "flex" : "hidden sm:flex")}>
@@ -511,20 +498,19 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
               <div className="min-w-0 flex-1">{addToCartButton}</div>
             </div>
 
-            <div className="mt-auto hidden pt-4 sm:grid sm:grid-cols-2 sm:gap-3">
-              <Button
+            <div className="mt-5 hidden gap-6 sm:flex">
+              <button
                 type="button"
-                variant="outline"
-                className="gap-2"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
                 onClick={() => (isFavorite ? openFavorites() : toggle(current.id, false))}
               >
-                <Heart className={cn("size-4", isFavorite && "fill-destructive text-destructive")} />
+                <Heart className={cn("size-4", isFavorite && "fill-foreground")} />
                 Favorilere ekle
-              </Button>
-              <Button type="button" variant="outline" className="gap-2" onClick={handleShare}>
+              </button>
+              <button type="button" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={handleShare}>
                 <Share2 className="size-4" />
                 Paylaş
-              </Button>
+              </button>
             </div>
           </div>
         </section>
@@ -532,7 +518,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
 
       {/* Sekmeler */}
       <section id="urun-detay-sekmeler" className="scroll-mt-24">
-        <div className="rounded-[var(--radius-card)] border border-border/70 bg-card shadow-card">
+        <div className="border-t border-border">
           <div className="flex gap-1 overflow-x-auto border-b border-border/70 px-2 scrollbar-hide sm:px-4">
             {tabs.map((tab) => (
               <button
@@ -588,7 +574,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
 
       {!embedded && related.length > 0 && (
         <section className="space-y-6">
-          <h2 className="text-2xl font-bold tracking-tight">İlginizi Çekebilecek Ürünler</h2>
+          <h2 className="text-xl font-semibold tracking-tight">Benzer ürünler</h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
             {related.slice(0, 4).map((p) => (
               <ProductCard key={p.id} product={p} onAddToCart={addProduct} />
@@ -599,7 +585,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
 
       {/* Mobil sticky CTA */}
       {!embedded && (
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 p-3 shadow-hover backdrop-blur-md sm:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background p-3 sm:hidden">
         <div className="container mx-auto flex items-center gap-3 px-1">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs text-muted-foreground">{formatTl(sale)}</p>

@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Heart, ImageOff, ShoppingBag, Star, Truck } from "lucide-react";
+import { Heart, ImageOff, Search } from "lucide-react";
 import { ProductDetailDialog } from "@/components/product/product-detail-dialog";
-import { Button } from "@/components/ui/button";
-import { LABELS } from "@/config/constants";
-import { useFirmaId } from "@/hooks/use-firma-id";
-import { isFreeShipping } from "@/lib/shipping";
+import { LABELS, ROUTES } from "@/config/constants";
+import { useAuthStore } from "@/hooks/use-auth-store";
+import { useFavoriteToggle } from "@/hooks/use-favorites";
+import { accountService } from "@/services/account.service";
 import { formatPrice } from "@/lib/utils";
-import { storeService } from "@/services/store.service";
 import type { FirmaUrunDto } from "@/types/api";
 import { cn } from "@/lib/utils";
 
@@ -23,13 +23,7 @@ interface ProductCardProps {
   highlight?: boolean;
 }
 
-export function ProductCard({
-  product,
-  onAddToCart,
-  onToggleFavorite,
-  isFavorite,
-  highlight = false,
-}: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
   const inStock = (product.stokMiktari ?? 0) > 0;
   const sale = product.satisTutari;
   const list = product.listeTutari;
@@ -42,78 +36,28 @@ export function ProductCard({
   }, [product.resim, product.resimler]);
   const cover = images[0];
   const hoverImage = images[1];
+  const href = ROUTES.product(product.slug ?? String(product.id));
   const [detailOpen, setDetailOpen] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [hoverFailed, setHoverFailed] = useState(false);
-  const [cartState, setCartState] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const cartLock = useRef(false);
-  const firmaId = useFirmaId();
-  const { data: storeConfig } = useQuery({
-    queryKey: ["store-config", firmaId],
-    queryFn: () => storeService.getConfig(firmaId),
-    staleTime: 5 * 60 * 1000,
+  const user = useAuthStore((s) => s.user);
+  const { toggle } = useFavoriteToggle();
+  const { data: favoriteIds = [] } = useQuery({
+    queryKey: ["favorites"],
+    queryFn: accountService.getFavorites,
+    enabled: !!user,
   });
-  const showFreeShipping =
-    sale != null &&
-    storeConfig != null &&
-    isFreeShipping(sale, storeConfig.ucretsizKargoLimiti, storeConfig.kargoUcreti);
-  const reviewCount = product.yorumSayisi ?? 0;
-  const reviewAverage = product.ortalamaPuan ?? 0;
+  const isFavorite = favoriteIds.includes(product.id);
 
   useEffect(() => {
     setImageFailed(false);
     setHoverFailed(false);
   }, [cover, hoverImage]);
 
-  useEffect(() => {
-    if (cartState !== "success" && cartState !== "error") return;
-    const timer = window.setTimeout(() => {
-      cartLock.current = false;
-      setCartState("idle");
-    }, cartState === "success" ? 1200 : 1600);
-    return () => window.clearTimeout(timer);
-  }, [cartState]);
-
-  const addToCart = (event?: MouseEvent) => {
-    event?.stopPropagation();
-    event?.preventDefault();
-    if (!onAddToCart || !inStock || cartLock.current) return;
-    cartLock.current = true;
-    setCartState("loading");
-    window.setTimeout(() => {
-      try {
-        onAddToCart(product);
-        setCartState("success");
-      } catch {
-        setCartState("error");
-      }
-    }, 0);
-  };
-
-  const cartLabel = !inStock
-    ? LABELS.outOfStock
-    : cartState === "loading"
-      ? LABELS.loading
-      : cartState === "success"
-        ? "Eklendi"
-        : cartState === "error"
-          ? "Eklenemedi"
-          : LABELS.addToCart;
-
   return (
-    <article
-      className={cn(
-        "group flex h-full w-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-card transition-shadow duration-200 hover:shadow-hover",
-        highlight && "ring-1 ring-primary/20",
-      )}
-    >
-      <div className="relative aspect-square w-full shrink-0 bg-white">
-        <button
-          type="button"
-          onClick={() => setDetailOpen(true)}
-          aria-label={product.isim}
-          className="absolute inset-0 cursor-pointer border-0 bg-transparent p-0"
-        >
+    <article className="group flex h-full w-full flex-col">
+      <div className="relative aspect-square w-full overflow-hidden bg-secondary">
+        <Link href={href} aria-label={product.isim} className="absolute inset-0">
           {cover && !imageFailed ? (
             <>
               <Image
@@ -121,7 +65,7 @@ export function ProductCard({
                 alt=""
                 fill
                 className={cn(
-                  "object-contain p-3 transition-transform duration-300 group-hover:scale-[1.04]",
+                  "object-contain p-4 transition-opacity duration-300",
                   hoverImage && !hoverFailed && "group-hover:opacity-0",
                 )}
                 sizes="(max-width: 768px) 50vw, 25vw"
@@ -132,7 +76,7 @@ export function ProductCard({
                   src={hoverImage}
                   alt=""
                   fill
-                  className="object-contain p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  className="object-contain p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                   sizes="(max-width: 768px) 50vw, 25vw"
                   onError={() => setHoverFailed(true)}
                 />
@@ -143,94 +87,57 @@ export function ProductCard({
               <ImageOff className="size-8 opacity-40" />
             </span>
           )}
-        </button>
+        </Link>
 
-        <div className="absolute left-2 top-2 z-10 flex flex-col items-start gap-1">
-          {hasDiscount && (
-            <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[11px] font-semibold text-white">
-              -%{discountPercent}
-            </span>
-          )}
-          {showFreeShipping && inStock && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-[hsl(var(--success))] shadow-sm">
-              <Truck className="size-3" />
-              {LABELS.freeShipping}
-            </span>
-          )}
-          {!inStock && (
-            <span className="rounded-md bg-foreground/80 px-1.5 py-0.5 text-[11px] font-semibold text-white">
-              {LABELS.outOfStock}
-            </span>
-          )}
-        </div>
-        {onToggleFavorite && (
+        {hasDiscount && (
+          <span className="pointer-events-none absolute bottom-3 left-3 z-10 bg-background/95 px-2 py-1 text-[11px] font-medium text-foreground">
+            %{discountPercent} indirim
+          </span>
+        )}
+        {!inStock && (
+          <span className="pointer-events-none absolute bottom-3 left-3 z-10 bg-background/95 px-2 py-1 text-[11px] font-medium text-foreground">
+            {LABELS.outOfStock}
+          </span>
+        )}
+
+        <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
           <button
             type="button"
-            className="absolute right-2 top-2 z-10 inline-flex size-8 items-center justify-center rounded-full bg-white/90 text-foreground opacity-100 shadow-sm transition-opacity md:opacity-0 md:group-hover:opacity-100"
-            onClick={() => onToggleFavorite(product)}
+            className="inline-flex size-8 items-center justify-center rounded-full bg-background/90 text-foreground"
+            onClick={() => toggle(product.id, isFavorite)}
             aria-label={LABELS.favorites}
             aria-pressed={isFavorite}
           >
-            <Heart className={cn("size-4", isFavorite && "fill-primary text-primary")} />
+            <Heart className={cn("size-4", isFavorite && "fill-foreground")} />
           </button>
-        )}
-
-        {onAddToCart && inStock && (
-          <>
-            <div className="pointer-events-none absolute inset-x-2 bottom-2 z-10 hidden translate-y-2 opacity-0 transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 md:block">
-              <Button
-                size="sm"
-                className="pointer-events-auto h-9 w-full"
-                disabled={cartState === "loading" || cartState === "success"}
-                aria-busy={cartState === "loading"}
-                onClick={addToCart}
-              >
-                {cartState === "success" ? <Check className="size-4" /> : <ShoppingBag className="size-4" />}
-                {cartLabel}
-              </Button>
-            </div>
-            <button
-              type="button"
-              className="absolute bottom-2 right-2 z-10 inline-flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm md:hidden"
-              disabled={cartState === "loading" || cartState === "success"}
-              aria-label={cartLabel}
-              onClick={addToCart}
-            >
-              {cartState === "success" ? <Check className="size-4" /> : <ShoppingBag className="size-4" />}
-            </button>
-          </>
-        )}
+          <button
+            type="button"
+            className="hidden size-8 items-center justify-center rounded-full bg-background/90 text-foreground md:inline-flex md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
+            onClick={() => setDetailOpen(true)}
+            aria-label={LABELS.quickView}
+          >
+            <Search className="size-4" />
+          </button>
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5 p-3">
-        {product.firmaMarkaIsim && (
-          <p className="truncate text-xs text-muted-foreground">{product.firmaMarkaIsim}</p>
-        )}
-        <button
-          type="button"
-          title={product.isim}
-          onClick={() => setDetailOpen(true)}
-          className="line-clamp-2 min-h-10 text-left text-sm font-medium leading-5 text-foreground hover:text-primary"
-        >
-          {product.isim}
-        </button>
-
-        {reviewCount > 0 && (
-          <p className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Star className="size-3.5 fill-primary text-primary" />
-            <span className="font-semibold text-foreground">{reviewAverage.toFixed(1)}</span>
-            <span>({reviewCount})</span>
+      <div className="flex flex-1 flex-col gap-1 pt-3">
+        {(product.firmaMarkaIsim || product.firmaKategoriIsim) && (
+          <p className="truncate text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+            {[product.firmaMarkaIsim, product.firmaKategoriIsim].filter(Boolean).join(" · ")}
           </p>
         )}
-
-        <div className="mt-auto">
+        <Link href={href} title={product.isim} className="line-clamp-2 min-h-10 text-sm font-medium leading-5 text-foreground">
+          {product.isim}
+        </Link>
+        <div className="mt-1 flex flex-wrap items-baseline gap-2">
           {sale != null ? (
-            <div className="flex flex-col">
-              <span className="text-base font-bold tracking-tight text-foreground">{formatPrice(sale)}</span>
+            <>
+              <span className="text-[15px] font-semibold tracking-tight">{formatPrice(sale)}</span>
               {hasDiscount && (
-                <span className="text-xs text-muted-foreground line-through">{formatPrice(list!)}</span>
+                <span className="text-sm text-muted-foreground line-through">{formatPrice(list!)}</span>
               )}
-            </div>
+            </>
           ) : (
             <span className="text-sm text-muted-foreground">Fiyat sorunuz</span>
           )}

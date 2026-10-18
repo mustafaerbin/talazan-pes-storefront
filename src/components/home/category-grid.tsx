@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight, LayoutGrid } from "lucide-react";
 import { getCategoryIcon } from "@/lib/category-icons";
-import { ROUTES } from "@/config/constants";
+import { LABELS, ROUTES } from "@/config/constants";
 import type { FirmaKategoriDto } from "@/types/api";
 
 interface CategoryGridProps {
@@ -11,40 +12,41 @@ interface CategoryGridProps {
   subtitle?: string;
 }
 
-export function CategoryGrid({ categories, title, subtitle }: CategoryGridProps) {
-  const visible = categories.filter((category) => !category.parent).slice(0, 8);
-  if (!visible.length) return null;
-  const columns =
-    visible.length <= 2
-      ? "grid-cols-2"
-      : visible.length <= 4
-        ? "grid-cols-2 sm:grid-cols-4"
-        : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+export function CategoryGrid({ categories }: CategoryGridProps) {
+  const roots = categories.filter((category) => !category.parent).slice(0, 2);
+  if (!roots.length) return null;
+
+  const items = [
+    ...roots.map((category) => ({
+      href: ROUTES.category(category.slug ?? String(category.id)),
+      label: category.isim,
+      Icon: getCategoryIcon(category.isim),
+    })),
+    {
+      href: ROUTES.search,
+      label: LABELS.allProducts,
+      Icon: LayoutGrid,
+    },
+  ];
 
   return (
-    <section className="space-y-4">
-      {(title || subtitle) && (
-        <div>
-          {title && <h2 className="text-xl font-semibold tracking-tight md:text-2xl">{title}</h2>}
-          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
-        </div>
-      )}
-      <div className={`grid gap-3 ${columns}`}>
-        {visible.map((category) => {
-          const Icon = getCategoryIcon(category.isim);
-          return (
-            <Link
-              key={category.id}
-              href={ROUTES.category(category.slug ?? String(category.id))}
-              className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/30"
-            >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
-                <Icon className="size-5" />
-              </span>
-              <span className="line-clamp-2 text-sm font-semibold leading-snug">{category.isim}</span>
-            </Link>
-          );
-        })}
+    <section className="border-y border-border bg-background">
+      <div className={items.length > 2 ? "grid sm:grid-cols-3" : items.length === 2 ? "grid sm:grid-cols-2" : "grid"}>
+        {items.map((item, index) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex items-center justify-between gap-3 px-6 py-4 text-sm text-foreground transition-colors hover:bg-secondary ${
+              index > 0 ? "border-t border-border sm:border-t-0 sm:border-l" : ""
+            }`}
+          >
+            <span className="inline-flex items-center gap-3">
+              <item.Icon className="size-4 text-muted-foreground" />
+              <span>{item.label}</span>
+            </span>
+            <ArrowRight className="size-4 text-muted-foreground" />
+          </Link>
+        ))}
       </div>
     </section>
   );

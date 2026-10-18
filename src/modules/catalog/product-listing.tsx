@@ -1,14 +1,14 @@
 "use client";
 
-import { FormEvent, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { SlidersHorizontal, X } from "lucide-react";
 import { CategoryTreeNav } from "@/components/catalog/category-tree-nav";
 import { InfiniteProductGrid } from "@/components/catalog/infinite-product-grid";
+import { ListingFilters } from "@/components/catalog/listing-filters";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ProductGridSkeleton } from "@/components/ui/skeleton-loaders";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { DEFAULT_PAGE_SIZE, LABELS, ROUTES, SORT_OPTIONS } from "@/config/constants";
 import { useFirmaId } from "@/hooks/use-firma-id";
@@ -27,8 +27,10 @@ interface ProductListingProps {
 export function ProductListing({ initialFilters = {}, initialCategories, title }: ProductListingProps) {
   const firmaId = useFirmaId();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { addProduct } = useAddToCart();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const liste = searchParams.get("liste");
   const showBrands = liste === "markalar";
@@ -86,7 +88,6 @@ export function ProductListing({ initialFilters = {}, initialCategories, title }
   });
 
   const products = productsQuery.products;
-  const [searchText, setSearchText] = useState(searchParams.get("q") ?? "");
 
   const {
     data: categories = [],
@@ -103,23 +104,54 @@ export function ProductListing({ initialFilters = {}, initialCategories, title }
   const activeCategory = filters.kategoriId != null ? categoryIndex.byId.get(filters.kategoriId) : undefined;
   const categoryCrumbs = activeCategory ? ancestorPath(activeCategory.id, categoryIndex) : [];
   const subcategories = activeCategory ? childCategories(categoryIndex, activeCategory.id) : [];
+  const resultCount = listMode === "default" ? productsQuery.totalElements ?? products.length : products.length;
+
+  const replaceParams = (mutate: (params: URLSearchParams) => void) => {
+    const params = new URLSearchParams(searchParams.toString());
+    mutate(params);
+    params.delete("page");
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
 
   const updateParam = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set(key, value);
-    else params.delete(key);
-    params.delete("page");
-    router.push(`?${params.toString()}`);
+    replaceParams((params) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    });
   };
 
-  const submitSearch = (event: FormEvent) => {
-    event.preventDefault();
-    updateParam("q", searchText.trim());
+  const clearFilters = () => {
+    if (pathname.startsWith("/kategori/")) {
+      router.push(pathname);
+      return;
+    }
+    router.push(ROUTES.search);
   };
+
+  const activeChips: { label: string; onRemove: () => void }[] = [];
+  if (activeCategory) {
+    activeChips.push({
+      label: activeCategory.isim,
+      onRemove: () => {
+        if (pathname.startsWith("/kategori/")) router.push(ROUTES.search);
+        else updateParam("kategoriId", "");
+      },
+    });
+  }
+  if (filters.minFiyat != null) {
+    activeChips.push({ label: `En az ₺${filters.minFiyat}`, onRemove: () => updateParam("minFiyat", "") });
+  }
+  if (filters.maxFiyat != null) {
+    activeChips.push({ label: `En çok ₺${filters.maxFiyat}`, onRemove: () => updateParam("maxFiyat", "") });
+  }
+  if (liste === "indirimli" && !title?.includes("İndirim")) {
+    activeChips.push({ label: "İndirimli", onRemove: () => updateParam("liste", "") });
+  }
 
   return (
-    <div className="space-y-8">
-      {showBrands && pageTitle && <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>}
+    <div className="space-y-6">
+      {showBrands && pageTitle && <h1 className="text-2xl font-semibold tracking-tight">{pageTitle}</h1>}
 
       {showBrands ? (
         brandsLoading ? (
@@ -132,7 +164,7 @@ export function ProductListing({ initialFilters = {}, initialCategories, title }
               <Link
                 key={brand.id}
                 href={`${ROUTES.search}?markaId=${brand.id}`}
-                className="text-sm font-semibold tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                className="text-sm tracking-wide text-muted-foreground transition-colors hover:text-foreground"
               >
                 {brand.isim}
               </Link>
@@ -140,13 +172,15 @@ export function ProductListing({ initialFilters = {}, initialCategories, title }
           </div>
         )
       ) : (
-      <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <CategoryTreeNav
-          categories={categories}
-          activeId={filters.kategoriId}
-          isLoading={categoriesLoading}
-          isError={categoriesError}
-        />
+      <div className="grid items-start gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="hidden lg:block">
+          <CategoryTreeNav
+            categories={categories}
+            activeId={filters.kategoriId}
+            isLoading={categoriesLoading}
+            isError={categoriesError}
+          />
+        </div>
 
         <div className="min-w-0 space-y-5">
           {categoryCrumbs.length > 0 && (
@@ -160,93 +194,67 @@ export function ProductListing({ initialFilters = {}, initialCategories, title }
               }))}
             />
           )}
-          {pageTitle && <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{pageTitle}</h1>}
+          {pageTitle && <h1 className="text-2xl font-semibold tracking-tight md:text-[1.75rem]">{pageTitle}</h1>}
           {subcategories.length > 0 && (
-            <ul className="flex max-h-48 flex-wrap gap-2 overflow-y-auto">
+            <ul className="flex flex-wrap gap-2">
               {subcategories.map((category) => (
                 <li key={category.id}>
                   <Link
                     href={withListingQuery(ROUTES.category(category.slug || String(category.id)), searchParams)}
                     title={category.isim}
-                    className="inline-flex max-w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground hover:text-primary"
+                    className="inline-flex rounded-md border border-border px-3 py-1.5 text-sm hover:bg-secondary"
                   >
-                    <span className="truncate">{category.isim}</span>
+                    {category.isim}
                   </Link>
                 </li>
               ))}
             </ul>
           )}
 
-          <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-3 shadow-card lg:flex-row lg:items-center">
-            <form onSubmit={submitSearch} className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchText}
-                onChange={(event) => setSearchText(event.target.value)}
-                placeholder={LABELS.searchPlaceholder}
-                aria-label={LABELS.searchPlaceholder}
-                className="h-10 pl-9"
-              />
-            </form>
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                type="number"
-                placeholder="Min"
-                aria-label={LABELS.priceRange}
-                className="h-10 w-24"
-                defaultValue={filters.minFiyat}
-                onBlur={(event) => updateParam("minFiyat", event.target.value)}
-              />
-              <Input
-                type="number"
-                placeholder="Max"
-                aria-label={LABELS.priceRange}
-                className="h-10 w-24"
-                defaultValue={filters.maxFiyat}
-                onBlur={(event) => updateParam("maxFiyat", event.target.value)}
-              />
-              <select
-                aria-label={LABELS.sortBy}
-                className="h-10 rounded-[var(--radius-input)] border border-input bg-background px-3 text-sm"
-                defaultValue={filters.siralama}
-                onChange={(event) => updateParam("siralama", event.target.value)}
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={filters.stoktaVar === true}
-                onClick={() => updateParam("stoktaVar", filters.stoktaVar ? "" : "true")}
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-background px-3 text-sm font-medium"
-              >
-                <span
-                  className={`relative h-5 w-9 rounded-full transition-colors ${
-                    filters.stoktaVar ? "bg-primary" : "bg-secondary"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 size-4 rounded-full bg-white shadow-card transition-transform ${
-                      filters.stoktaVar ? "translate-x-4" : "translate-x-0.5"
-                    }`}
-                  />
-                </span>
-                {LABELS.inStockOnly}
-              </button>
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              {productsQuery.isLoading ? LABELS.loading : `${resultCount} ürün`}
+            </p>
+            <button
+              type="button"
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm lg:hidden"
+              onClick={() => setFiltersOpen(true)}
+            >
+              <SlidersHorizontal className="size-4" />
+              Filtrele
+            </button>
+            <select
+              aria-label={LABELS.sortBy}
+              className="ml-auto h-9 rounded-md border border-border bg-background px-3 text-sm"
+              defaultValue={filters.siralama}
+              onChange={(event) => updateParam("siralama", event.target.value)}
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {!productsQuery.isLoading &&
-            (listMode === "default" ? productsQuery.totalElements != null : true) && (
-              <p className="text-sm font-medium text-muted-foreground">
-                {listMode === "default" ? (productsQuery.totalElements ?? 0) : products.length}{" "}
-                {LABELS.results}
-              </p>
-            )}
+          {activeChips.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {activeChips.map((chip) => (
+                <button
+                  key={chip.label}
+                  type="button"
+                  onClick={chip.onRemove}
+                  className="inline-flex items-center gap-1 rounded-md bg-secondary px-2.5 py-1 text-sm"
+                >
+                  {chip.label}
+                  <X className="size-3.5" />
+                </button>
+              ))}
+              <button type="button" className="inline-flex items-center gap-1 text-sm text-muted-foreground" onClick={clearFilters}>
+                Temizle <X className="size-3.5" />
+              </button>
+            </div>
+          )}
 
           <InfiniteProductGrid
             products={products}
@@ -261,6 +269,30 @@ export function ProductListing({ initialFilters = {}, initialCategories, title }
         </div>
       </div>
       )}
+
+      <ListingFilters
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        categories={categories}
+        activeCategoryId={filters.kategoriId}
+        minFiyat={filters.minFiyat}
+        maxFiyat={filters.maxFiyat}
+        discounted={liste === "indirimli"}
+        resultCount={resultCount}
+        onClear={clearFilters}
+        onApply={({ kategoriId, minFiyat, maxFiyat, discounted }) => {
+          replaceParams((params) => {
+            if (kategoriId) params.set("kategoriId", kategoriId);
+            else params.delete("kategoriId");
+            if (minFiyat) params.set("minFiyat", minFiyat);
+            else params.delete("minFiyat");
+            if (maxFiyat) params.set("maxFiyat", maxFiyat);
+            else params.delete("maxFiyat");
+            if (discounted) params.set("liste", "indirimli");
+            else if (params.get("liste") === "indirimli") params.delete("liste");
+          });
+        }}
+      />
     </div>
   );
 }

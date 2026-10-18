@@ -1,13 +1,10 @@
 import {
   AtSign,
   Briefcase,
-  CreditCard,
   Globe,
   Mail,
   Phone,
   Play,
-  Smartphone,
-  Truck,
   Users,
 } from "lucide-react";
 import { FooterNavLink } from "@/components/layout/footer-nav-link";
@@ -55,9 +52,6 @@ function InstagramIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-
-const PAYMENT_LABELS = ["Visa", "Mastercard", "Troy", "Amex"];
-const SHIPPING_LABELS = ["Yurtiçi", "Aras", "MNG", "Sürat"];
 
 export function SiteFooter({ config }: SiteFooterProps) {
   const footer = config.footer;
@@ -116,30 +110,31 @@ export function SiteFooter({ config }: SiteFooterProps) {
   ].filter((s) => s.href);
 
   return (
-    <footer className="mt-20 border-t border-border bg-card">
-      <div className="container mx-auto grid gap-12 px-4 py-16 md:grid-cols-2 lg:grid-cols-6">
-        <div className="space-y-6 lg:col-span-2">
-          <h3 className="text-2xl font-extrabold tracking-tight">{config.firmaIsim}</h3>
-          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            {config.ayarlar?.siteAciklama ??
-              "Premium alışveriş deneyimi, güvenli ödeme ve hızlı teslimat ile yanınızdayız."}
-          </p>
+    <footer className="mt-16 border-t border-border bg-background">
+      <div className="container mx-auto grid gap-10 px-4 py-12 md:grid-cols-2 lg:grid-cols-6">
+        <div className="space-y-5 lg:col-span-2">
+          <h3 className="text-lg font-semibold tracking-tight">{config.firmaIsim}</h3>
+          {config.ayarlar?.siteAciklama && (
+            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+              {config.ayarlar.siteAciklama}
+            </p>
+          )}
           <ul className="space-y-2.5 text-sm text-muted-foreground">
             {ayarlar?.iletisimEmail && (
               <li className="flex items-center gap-2.5">
-                <Mail className="size-4 shrink-0 text-primary" />
+                <Mail className="size-4 shrink-0 text-muted-foreground" />
                 {ayarlar.iletisimEmail}
               </li>
             )}
             {ayarlar?.iletisimTelefon && (
               <li className="flex items-center gap-2.5">
-                <Phone className="size-4 shrink-0 text-primary" />
+                <Phone className="size-4 shrink-0 text-muted-foreground" />
                 {ayarlar.iletisimTelefon}
               </li>
             )}
             {ayarlar?.iletisimAdres && (
               <li className="flex items-start gap-2.5">
-                <Globe className="mt-0.5 size-4 shrink-0 text-primary" />
+                <Globe className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 {ayarlar.iletisimAdres}
               </li>
             )}
@@ -153,32 +148,25 @@ export function SiteFooter({ config }: SiteFooterProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-secondary text-muted-foreground shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary hover:shadow-hover"
+                  className="inline-flex size-10 items-center justify-center border border-border text-muted-foreground hover:text-foreground"
                 >
                   <Icon className="size-4" />
                 </a>
               ))}
             </div>
           )}
-          <div className="rounded-[var(--radius-card)] border border-border bg-secondary/50 p-5 shadow-card">
-            <p className="text-sm font-bold">{LABELS.newsletter}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{LABELS.newsletterDesc}</p>
-            <form className="mt-4 flex gap-2" action={ROUTES.contact}>
-              <input
-                type="email"
-                name="email"
-                placeholder={LABELS.email}
-                className="h-10 flex-1 rounded-[var(--radius-input)] border border-input bg-card px-3 text-sm shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-                aria-label={LABELS.email}
-              />
-              <button
-                type="submit"
-                className="inline-flex h-10 items-center rounded-[var(--radius-btn)] bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-card transition-all hover:-translate-y-0.5 hover:shadow-hover"
-              >
-                {LABELS.subscribe}
-              </button>
-            </form>
-          </div>
+          <form className="flex max-w-sm gap-2" action={ROUTES.contact}>
+            <input
+              type="email"
+              name="email"
+              placeholder={LABELS.email}
+              className="h-10 flex-1 rounded-[var(--radius-input)] border border-input bg-background px-3 text-sm"
+              aria-label={LABELS.email}
+            />
+            <button type="submit" className="inline-flex h-10 items-center bg-primary px-4 text-sm text-primary-foreground">
+              {LABELS.subscribe}
+            </button>
+          </form>
         </div>
 
         {displayColumns.map((column) => (
@@ -192,7 +180,7 @@ export function SiteFooter({ config }: SiteFooterProps) {
                     label={link.etiket}
                     phone={ayarlar?.iletisimTelefon}
                     email={ayarlar?.iletisimEmail}
-                    className="transition-colors hover:text-primary"
+                    className="transition-colors hover:text-foreground"
                   />
                 </li>
               ))}
@@ -201,56 +189,18 @@ export function SiteFooter({ config }: SiteFooterProps) {
         ))}
       </div>
 
-      <div className="border-t border-border bg-secondary/30">
-        <div className="container mx-auto grid gap-8 px-4 py-10 md:grid-cols-3">
-          <div>
-            <p className="mb-4 flex items-center gap-2 text-sm font-bold">
-              <Smartphone className="size-4 text-primary" />
-              {LABELS.mobileApps}
-            </p>
-            <div className="flex gap-2.5">
-              <span className="rounded-[var(--radius-btn)] border border-border bg-card px-4 py-2.5 text-xs font-medium shadow-card">
-                App Store
+      {paymentLogos.length > 0 && (
+        <div className="border-t border-border">
+          <div className="container mx-auto flex flex-wrap items-center gap-2 px-4 py-6">
+            <p className="mr-2 text-sm text-muted-foreground">{LABELS.paymentMethods}</p>
+            {paymentLogos.map((label) => (
+              <span key={label} className="border border-border px-3 py-1.5 text-xs">
+                {label}
               </span>
-              <span className="rounded-[var(--radius-btn)] border border-border bg-card px-4 py-2.5 text-xs font-medium shadow-card">
-                Google Play
-              </span>
-            </div>
-          </div>
-          <div>
-            <p className="mb-4 flex items-center gap-2 text-sm font-bold">
-              <CreditCard className="size-4 text-primary" />
-              {LABELS.paymentMethods}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {(paymentLogos.length ? paymentLogos : PAYMENT_LABELS).map((label) => (
-                <span
-                  key={label}
-                  className="rounded-[var(--radius-btn)] border border-border bg-card px-3.5 py-2 text-xs font-medium shadow-card"
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="mb-4 flex items-center gap-2 text-sm font-bold">
-              <Truck className="size-4 text-primary" />
-              {LABELS.shippingPartners}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {SHIPPING_LABELS.map((label) => (
-                <span
-                  key={label}
-                  className="rounded-[var(--radius-btn)] border border-border bg-card px-3.5 py-2 text-xs font-medium shadow-card"
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
       <div className="border-t border-border py-7 text-center text-sm text-muted-foreground">
         {footer?.copyrightMetni ?? `© ${new Date().getFullYear()} ${config.firmaIsim}. Tüm hakları saklıdır.`}

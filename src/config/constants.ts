@@ -26,8 +26,8 @@ export const LABELS = {
   appName: "Talazan Mağaza",
   home: "Ana Sayfa",
   search: "Ara",
-  searchPlaceholder: "Ürün, kategori veya marka ara...",
-  cart: "Sepet",
+  searchPlaceholder: "Ürün veya kategori ara...",
+  cart: "Sepetim",
   checkout: "Ödeme",
   login: "Giriş Yap",
   register: "Kayıt Ol",
@@ -141,10 +141,10 @@ export const LABELS = {
 } as const;
 
 export const SORT_OPTIONS = [
+  { value: "satisTutari,desc", label: "Önerilen sıralama" },
+  { value: "satisTutari,asc", label: "Fiyat (artan)" },
   { value: "isim,asc", label: "İsim (A-Z)" },
   { value: "isim,desc", label: "İsim (Z-A)" },
-  { value: "satisTutari,asc", label: "Fiyat (Artan)" },
-  { value: "satisTutari,desc", label: "Fiyat (Azalan)" },
 ] as const;
 
 export const DEFAULT_PAGE_SIZE = 12;

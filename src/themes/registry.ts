@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { hexToHslComponents } from "@/lib/color";
 import type { ThemeCode } from "@/types/api";
 
 export interface ThemeDefinition {
@@ -10,14 +9,37 @@ export interface ThemeDefinition {
   cssVars: Record<string, string>;
 }
 
+const talazanVars = {
+  "--background": "0 0% 100%",
+  "--foreground": "0 0% 14%",
+  "--card": "0 0% 100%",
+  "--card-foreground": "0 0% 14%",
+  "--primary": "0 0% 14%",
+  "--primary-foreground": "0 0% 100%",
+  "--secondary": "60 10% 97%",
+  "--secondary-foreground": "0 0% 14%",
+  "--muted": "60 10% 97%",
+  "--muted-foreground": "0 0% 42%",
+  "--accent": "60 10% 97%",
+  "--accent-foreground": "0 0% 14%",
+  "--border": "60 4% 90%",
+  "--input": "60 4% 90%",
+  "--ring": "0 0% 14%",
+  "--hero-bg": "0 0% 10%",
+  "--topbar-bg": "0 0% 100%",
+  "--topbar-fg": "0 0% 42%",
+  "--destructive": "0 0% 14%",
+};
+
 const baseVars = {
-  "--radius-btn": "14px",
-  "--radius-input": "14px",
-  "--radius-card": "20px",
-  "--radius-hero": "28px",
-  "--radius-section": "24px",
-  "--radius": "0.875rem",
+  "--radius-btn": "6px",
+  "--radius-input": "6px",
+  "--radius-card": "8px",
+  "--radius-hero": "0px",
+  "--radius-section": "0px",
+  "--radius": "0.375rem",
   "--font-display": "var(--font-jakarta)",
+  ...talazanVars,
 };
 
 export const themes: Record<ThemeCode, ThemeDefinition> = {
@@ -28,51 +50,15 @@ export const themes: Record<ThemeCode, ThemeDefinition> = {
     previewGradient: "linear-gradient(135deg, #fafafa 0%, #e4e4e7 100%)",
     cssVars: {
       ...baseVars,
-      "--background": "0 0% 100%",
-      "--foreground": "240 10% 3.9%",
-      "--card": "0 0% 100%",
-      "--card-foreground": "240 10% 3.9%",
-      "--primary": "240 5.9% 10%",
-      "--primary-foreground": "0 0% 98%",
-      "--secondary": "240 4.8% 95.9%",
-      "--secondary-foreground": "240 5.9% 10%",
-      "--muted": "240 4.8% 95.9%",
-      "--muted-foreground": "240 3.8% 46.1%",
-      "--accent": "240 4.8% 95.9%",
-      "--accent-foreground": "240 5.9% 10%",
-      "--border": "240 5.9% 90%",
-      "--input": "240 5.9% 90%",
-      "--ring": "240 5.9% 10%",
-      "--hero-bg": "240 4.8% 97%",
     },
   },
   modern: {
     code: "modern",
     name: "Modern",
     description: "Talazan premium SaaS commerce görünümü",
-    previewGradient: "linear-gradient(135deg, #F8F9FF 0%, #4F46E5 100%)",
+    previewGradient: "linear-gradient(135deg, #F7F7F5 0%, #242424 100%)",
     cssVars: {
       ...baseVars,
-      "--background": "228 100% 99%",
-      "--foreground": "221 39% 11%",
-      "--card": "0 0% 100%",
-      "--card-foreground": "221 39% 11%",
-      "--primary": "243 76% 59%",
-      "--primary-foreground": "0 0% 100%",
-      "--secondary": "228 100% 97%",
-      "--secondary-foreground": "221 39% 11%",
-      "--muted": "228 60% 97%",
-      "--muted-foreground": "220 9% 46%",
-      "--accent": "239 84% 67%",
-      "--accent-foreground": "0 0% 100%",
-      "--border": "228 33% 93%",
-      "--input": "228 33% 93%",
-      "--ring": "243 76% 59%",
-      "--hero-bg": "228 100% 98%",
-      "--success": "160 84% 39%",
-      "--warning": "38 92% 50%",
-      "--topbar-bg": "243 76% 59%",
-      "--topbar-fg": "0 0% 100%",
     },
   },
   fashion: {
@@ -168,29 +154,11 @@ export function applyThemeVars(code: ThemeCode, brandColors?: {
   secondaryColor?: string;
   accentColor?: string;
 }) {
-  const theme = themes[code];
-  const vars: Record<string, string> = { ...theme.cssVars };
-
-  if (brandColors?.primaryColor) {
-    vars["--brand-primary"] = brandColors.primaryColor;
-    const primaryHsl = hexToHslComponents(brandColors.primaryColor);
-    if (primaryHsl) {
-      vars["--primary"] = primaryHsl;
-      vars["--ring"] = primaryHsl;
-      vars["--hero-bg"] = primaryHsl.split(" ").slice(0, 2).join(" ") + " 97%";
-    }
-  }
-  if (brandColors?.secondaryColor) {
-    vars["--brand-secondary"] = brandColors.secondaryColor;
-    const secondaryHsl = hexToHslComponents(brandColors.secondaryColor);
-    if (secondaryHsl) vars["--secondary"] = secondaryHsl;
-  }
-  if (brandColors?.accentColor) {
-    vars["--brand-accent"] = brandColors.accentColor;
-    const accentHsl = hexToHslComponents(brandColors.accentColor);
-    if (accentHsl) vars["--accent"] = accentHsl;
-  }
-
+  const theme = themes[code] ?? themes.modern;
+  const vars: Record<string, string> = { ...baseVars, ...theme.cssVars };
+  if (brandColors?.primaryColor) vars["--brand-primary"] = brandColors.primaryColor;
+  if (brandColors?.secondaryColor) vars["--brand-secondary"] = brandColors.secondaryColor;
+  if (brandColors?.accentColor) vars["--brand-accent"] = brandColors.accentColor;
   return vars;
 }
 
