@@ -62,9 +62,9 @@ jobs:
             docker run -d \
               --name talazan-storefront \
               --restart unless-stopped \
-              --memory="512m" \
-              --memory-swap="512m" \
-              --cpus="0.25" \
+              --memory="1536m" \
+              --memory-swap="2g" \
+              --cpus="1" \
               -v /etc/localtime:/etc/localtime:ro \
               -v /etc/timezone:/etc/timezone:ro \
               --network root_my_network \

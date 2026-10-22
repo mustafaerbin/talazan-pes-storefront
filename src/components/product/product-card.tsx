@@ -57,7 +57,12 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <article className="group flex h-full w-full flex-col">
       <div className="relative aspect-square w-full overflow-hidden bg-secondary">
-        <Link href={href} aria-label={product.isim} className="absolute inset-0">
+        <button
+          type="button"
+          aria-label={`${LABELS.quickView}: ${product.isim}`}
+          className="absolute inset-0"
+          onClick={() => setDetailOpen(true)}
+        >
           {cover && !imageFailed ? (
             <>
               <Image
@@ -87,7 +92,7 @@ export function ProductCard({ product }: ProductCardProps) {
               <ImageOff className="size-8 opacity-40" />
             </span>
           )}
-        </Link>
+        </button>
 
         {hasDiscount && (
           <span className="pointer-events-none absolute bottom-3 left-3 z-10 bg-background/95 px-2 py-1 text-[11px] font-medium text-foreground">
@@ -112,7 +117,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </button>
           <button
             type="button"
-            className="hidden size-8 items-center justify-center rounded-full bg-background/90 text-foreground md:inline-flex md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
+            className="inline-flex size-8 items-center justify-center rounded-full bg-background/90 text-foreground"
             onClick={() => setDetailOpen(true)}
             aria-label={LABELS.quickView}
           >
@@ -121,15 +126,15 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 pt-3">
+      <Link href={href} title={product.isim} className="flex flex-1 flex-col gap-1 pt-3 text-foreground">
         {(product.firmaMarkaIsim || product.firmaKategoriIsim) && (
           <p className="truncate text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
             {[product.firmaMarkaIsim, product.firmaKategoriIsim].filter(Boolean).join(" · ")}
           </p>
         )}
-        <Link href={href} title={product.isim} className="line-clamp-2 min-h-10 text-sm font-medium leading-5 text-foreground">
+        <span className="line-clamp-2 min-h-10 text-sm font-medium leading-5">
           {product.isim}
-        </Link>
+        </span>
         <div className="mt-1 flex flex-wrap items-baseline gap-2">
           {sale != null ? (
             <>
@@ -142,7 +147,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <span className="text-sm text-muted-foreground">Fiyat sorunuz</span>
           )}
         </div>
-      </div>
+      </Link>
 
       {detailOpen && <ProductDetailDialog product={product} onClose={() => setDetailOpen(false)} />}
     </article>

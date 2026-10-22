@@ -3,8 +3,7 @@ import { StoreLayoutShell } from "@/components/layout/store-layout-shell";
 import { ProductListing } from "@/modules/catalog/product-listing";
 import { ProductGridSkeleton } from "@/components/ui/skeleton-loaders";
 import { resolveFirmaId } from "@/lib/tenant";
-import { getStoreConfig } from "@/modules/store/store.server";
-import { storeService } from "@/services/store.service";
+import { getStoreCategories, getStoreConfig } from "@/modules/store/store.server";
 import { buildStoreMetadata } from "@/utils/seo";
 
 export async function generateMetadata({
@@ -17,7 +16,7 @@ export async function generateMetadata({
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const firmaId = await resolveFirmaId(sp);
   const config = await getStoreConfig(firmaId).catch(() => null);
-  const categories = await storeService.getCategories(firmaId).catch(() => []);
+  const categories = await getStoreCategories(firmaId).catch(() => []);
   const category = categories.find((c) => c.slug === slug || String(c.id) === slug);
   return await buildStoreMetadata(config, {
     title: category?.isim ?? slug,
@@ -34,7 +33,7 @@ export default async function CategoryPage({
 }) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const firmaId = await resolveFirmaId(sp);
-  const categories = await storeService.getCategories(firmaId).catch(() => []);
+  const categories = await getStoreCategories(firmaId).catch(() => []);
   const category = categories.find((c) => c.slug === slug || String(c.id) === slug);
 
   return (

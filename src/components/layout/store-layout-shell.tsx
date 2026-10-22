@@ -3,9 +3,8 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { WhatsAppFab } from "@/components/layout/whatsapp-fab";
 import { StoreThemeProvider } from "@/themes/provider";
-import { getStoreConfig } from "@/modules/store/store.server";
+import { getStoreCategories, getStoreConfig } from "@/modules/store/store.server";
 import { resolveFirmaId } from "@/lib/tenant";
-import { storeService } from "@/services/store.service";
 import type { FirmaKategoriDto } from "@/types/api";
 
 interface StoreLayoutShellProps {
@@ -38,7 +37,7 @@ export async function StoreLayoutShell({
   const categories =
     categoriesProp && categoriesProp.length > 0
       ? categoriesProp
-      : await storeService.getCategories(firmaId).catch(() => []);
+      : await getStoreCategories(firmaId).catch(() => []);
 
   return (
     <StoreThemeProvider

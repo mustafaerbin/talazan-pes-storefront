@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { getStoreConfig } from "@/modules/store/store.server";
+import { getFaviconDataUrl, getStoreConfig } from "@/modules/store/store.server";
 
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
@@ -10,15 +10,7 @@ async function faviconDataUrl(): Promise<string | null> {
     const config = await getStoreConfig();
     const src = config.ayarlar?.faviconUrl?.trim().replace("://localhost", "://127.0.0.1");
     if (!src) return null;
-
-    const response = await fetch(src, { cache: "no-store" });
-    if (!response.ok) return null;
-
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i] ?? 0);
-    const type = response.headers.get("content-type")?.split(";")[0]?.trim() || "image/png";
-    return `data:${type};base64,${btoa(binary)}`;
+    return await getFaviconDataUrl(src);
   } catch {
     return null;
   }

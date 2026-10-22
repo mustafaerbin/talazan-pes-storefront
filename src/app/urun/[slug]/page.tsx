@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { StoreLayoutShell } from "@/components/layout/store-layout-shell";
 import { ProductDetailView } from "@/modules/catalog/product-detail";
 import { getRequestSiteUrl, resolveFirmaId } from "@/lib/tenant";
-import { getStoreConfig } from "@/modules/store/store.server";
+import { getProductBySlug, getStoreConfig } from "@/modules/store/store.server";
 import { storeService } from "@/services/store.service";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildProductJsonLd, buildStoreMetadata } from "@/utils/seo";
@@ -30,7 +30,7 @@ export async function generateMetadata({
   try {
     const [config, product] = await Promise.all([
       getStoreConfig(firmaId),
-      storeService.getProductBySlug(firmaId, slug),
+      getProductBySlug(firmaId, slug),
     ]);
     return await buildStoreMetadata(config, {
       title: product.isim,
@@ -55,7 +55,7 @@ export default async function ProductPage({
 
   let product;
   try {
-    product = await storeService.getProductBySlug(firmaId, slug);
+    product = await getProductBySlug(firmaId, slug);
   } catch {
     notFound();
   }

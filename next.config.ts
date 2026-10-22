@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    minimumCacheTTL: 86400,
     remotePatterns: [
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "localhost" },
