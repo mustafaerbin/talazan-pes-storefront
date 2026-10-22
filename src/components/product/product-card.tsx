@@ -14,6 +14,46 @@ import { formatPrice } from "@/lib/utils";
 import type { FirmaUrunDto } from "@/types/api";
 import { cn } from "@/lib/utils";
 
+function CardImage({
+  src,
+  className,
+  onFailed,
+}: {
+  src: string;
+  className?: string;
+  onFailed?: () => void;
+}) {
+  const [mode, setMode] = useState<"optimizer" | "native" | "failed">("optimizer");
+
+  if (mode === "failed") return null;
+
+  if (mode === "native") {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt=""
+        className={cn("absolute inset-0 size-full", className)}
+        onError={() => {
+          setMode("failed");
+          onFailed?.();
+        }}
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={src}
+      alt=""
+      fill
+      className={className}
+      sizes="(max-width: 768px) 50vw, 25vw"
+      onError={() => setMode("native")}
+    />
+  );
+}
+
 interface ProductCardProps {
   product: FirmaUrunDto;
   onAddToCart?: (product: FirmaUrunDto) => void;
@@ -38,7 +78,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const hoverImage = images[1];
   const href = ROUTES.product(product.slug ?? String(product.id));
   const [detailOpen, setDetailOpen] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
+  const [coverFailed, setCoverFailed] = useState(false);
   const [hoverFailed, setHoverFailed] = useState(false);
   const user = useAuthStore((s) => s.user);
   const { toggle } = useFavoriteToggle();
@@ -50,7 +90,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const isFavorite = favoriteIds.includes(product.id);
 
   useEffect(() => {
-    setImageFailed(false);
+    setCoverFailed(false);
     setHoverFailed(false);
   }, [cover, hoverImage]);
 
@@ -63,27 +103,23 @@ export function ProductCard({ product }: ProductCardProps) {
           className="absolute inset-0"
           onClick={() => setDetailOpen(true)}
         >
-          {cover && !imageFailed ? (
+          {cover && !coverFailed ? (
             <>
-              <Image
+              <CardImage
+                key={cover}
                 src={cover}
-                alt=""
-                fill
                 className={cn(
                   "object-contain p-4 transition-opacity duration-300",
                   hoverImage && !hoverFailed && "group-hover:opacity-0",
                 )}
-                sizes="(max-width: 768px) 50vw, 25vw"
-                onError={() => setImageFailed(true)}
+                onFailed={() => setCoverFailed(true)}
               />
               {hoverImage && !hoverFailed && (
-                <Image
+                <CardImage
+                  key={hoverImage}
                   src={hoverImage}
-                  alt=""
-                  fill
                   className="object-contain p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                  onError={() => setHoverFailed(true)}
+                  onFailed={() => setHoverFailed(true)}
                 />
               )}
             </>
