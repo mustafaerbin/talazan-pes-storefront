@@ -85,7 +85,7 @@ export default async function BlogPostPage({
 
   return (
     <StoreLayoutShell searchParams={searchParams}>
-      {config && <JsonLd data={buildWebPageJsonLd(pageContent, config, siteUrl)} />}
+      {config && <JsonLd data={await buildWebPageJsonLd(pageContent, config, siteUrl)} />}
       <div className="mx-auto max-w-3xl space-y-6">
         <Breadcrumbs
           items={[

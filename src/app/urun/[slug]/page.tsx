@@ -72,7 +72,7 @@ export default async function ProductPage({
 
   return (
     <StoreLayoutShell searchParams={searchParams}>
-      <JsonLd data={buildProductJsonLd(product, siteUrl)} />
+      <JsonLd data={await buildProductJsonLd(product, siteUrl)} />
       <ProductDetailView product={product} related={related} />
     </StoreLayoutShell>
   );

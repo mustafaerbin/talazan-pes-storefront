@@ -34,7 +34,7 @@ export default async function HomePage({
 
   return (
     <StoreLayoutShell searchParams={searchParams} categories={categories} fullWidth>
-      <JsonLd data={buildOrganizationJsonLd(config, siteUrl)} />
+      <JsonLd data={await buildOrganizationJsonLd(config, siteUrl)} />
       <HomeSections
         firmaId={firmaId}
         config={config}

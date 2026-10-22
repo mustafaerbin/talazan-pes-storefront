@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import type { FirmaUrunDto, SiteSayfaDto, StoreConfigDto } from "@/types/api";
-import { env } from "@/config/env";
 import { getRequestSiteUrl } from "@/lib/tenant";
 
 async function resolveSiteBase(siteUrl?: string): Promise<string> {
@@ -57,8 +56,8 @@ export async function buildStoreMetadata(
   };
 }
 
-export function buildProductJsonLd(product: FirmaUrunDto, siteUrl?: string) {
-  const base = siteUrl ?? env.siteUrl;
+export async function buildProductJsonLd(product: FirmaUrunDto, siteUrl?: string) {
+  const base = await resolveSiteBase(siteUrl);
   const reviewCount = product.yorumSayisi ?? 0;
   return {
     "@context": "https://schema.org",
@@ -92,8 +91,8 @@ export function buildProductJsonLd(product: FirmaUrunDto, siteUrl?: string) {
   };
 }
 
-export function buildOrganizationJsonLd(config: StoreConfigDto, siteUrl?: string) {
-  const base = siteUrl ?? env.siteUrl;
+export async function buildOrganizationJsonLd(config: StoreConfigDto, siteUrl?: string) {
+  const base = await resolveSiteBase(siteUrl);
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -124,8 +123,8 @@ export function buildBreadcrumbJsonLd(items: { name: string; item?: string }[]) 
   };
 }
 
-export function buildWebPageJsonLd(page: SiteSayfaDto, config: StoreConfigDto, siteUrl?: string) {
-  const base = siteUrl ?? env.siteUrl;
+export async function buildWebPageJsonLd(page: SiteSayfaDto, config: StoreConfigDto, siteUrl?: string) {
+  const base = await resolveSiteBase(siteUrl);
   return {
     "@context": "https://schema.org",
     "@type": "WebPage",

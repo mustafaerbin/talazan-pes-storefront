@@ -49,7 +49,7 @@ export default async function AboutPage({
 
   return (
     <StoreLayoutShell searchParams={searchParams}>
-      {page && config && <JsonLd data={buildWebPageJsonLd(page, config, siteUrl)} />}
+      {page && config && <JsonLd data={await buildWebPageJsonLd(page, config, siteUrl)} />}
       <div className="mx-auto max-w-4xl space-y-6">
         <Breadcrumbs items={[{ label: LABELS.about }]} />
         {page ? (

@@ -15,15 +15,20 @@ export async function resolveFirmaId(searchParams?: {
   const host = (h.get("x-forwarded-host") ?? h.get("host") ?? "").split(",")[0]?.trim() ?? "";
   const hostOnly = host.split(":")[0] ?? "";
 
-  if (isLocalHost(hostOnly) || process.env.NODE_ENV === "development") {
+  if (isLocalHost(hostOnly) || process.env.NODE_ENV === "development" || !hostOnly) {
     const param = searchParams?.firmaId;
     const value = Array.isArray(param) ? param[0] : param;
     if (value && !Number.isNaN(Number(value))) {
       return Number(value);
     }
+    return Number(process.env.NEXT_PUBLIC_FIRMA_ID ?? "1");
   }
 
-  return Number(process.env.NEXT_PUBLIC_FIRMA_ID ?? "1");
+  const resolved = await resolveFirmaIdForHost(host);
+  if (resolved == null) {
+    throw new Error("Magaza bulunamadi");
+  }
+  return resolved;
 }
 
 export async function getRequestSiteUrl(): Promise<string> {
