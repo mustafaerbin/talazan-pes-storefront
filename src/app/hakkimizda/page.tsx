@@ -16,13 +16,8 @@ async function getPageOrNull(firmaId: number, slug: string) {
   }
 }
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const firmaId = await resolveFirmaId(sp);
+export async function generateMetadata() {
+  const firmaId = await resolveFirmaId();
   const [config, page] = await Promise.all([
     getStoreConfig(firmaId).catch(() => null),
     getPageOrNull(firmaId, PAGE_SLUGS.about),
@@ -34,13 +29,8 @@ export async function generateMetadata({
   });
 }
 
-export default async function AboutPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const firmaId = await resolveFirmaId(sp);
+export default async function AboutPage() {
+  const firmaId = await resolveFirmaId();
   const [config, page] = await Promise.all([
     getStoreConfig(firmaId).catch(() => null),
     getPageOrNull(firmaId, PAGE_SLUGS.about),
@@ -48,7 +38,7 @@ export default async function AboutPage({
   const siteUrl = await getRequestSiteUrl();
 
   return (
-    <StoreLayoutShell searchParams={searchParams}>
+    <StoreLayoutShell>
       {page && config && <JsonLd data={await buildWebPageJsonLd(page, config, siteUrl)} />}
       <div className="mx-auto max-w-4xl space-y-6">
         <Breadcrumbs items={[{ label: LABELS.about }]} />

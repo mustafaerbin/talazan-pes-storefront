@@ -11,11 +11,11 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <section className="border-t border-border">
+    <section className="border-t border-border bg-muted">
       <div className="grid gap-8 py-10 sm:grid-cols-3">
         {FEATURES.map((feature) => (
           <div key={feature.title} className="flex gap-3">
-            <feature.icon className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+            <feature.icon className="mt-0.5 size-5 shrink-0 text-primary" />
             <div>
               <h3 className="text-sm font-medium">{feature.title}</h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{feature.desc}</p>

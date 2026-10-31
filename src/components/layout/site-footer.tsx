@@ -110,7 +110,7 @@ export function SiteFooter({ config }: SiteFooterProps) {
   ].filter((s) => s.href);
 
   return (
-    <footer className="mt-16 border-t border-border bg-background">
+    <footer className="mt-16 border-t border-border bg-muted">
       <div className="container mx-auto grid gap-10 px-4 py-12 md:grid-cols-2 lg:grid-cols-6">
         <div className="space-y-5 lg:col-span-2">
           <h3 className="text-lg font-semibold tracking-tight">{config.firmaIsim}</h3>
@@ -122,19 +122,19 @@ export function SiteFooter({ config }: SiteFooterProps) {
           <ul className="space-y-2.5 text-sm text-muted-foreground">
             {ayarlar?.iletisimEmail && (
               <li className="flex items-center gap-2.5">
-                <Mail className="size-4 shrink-0 text-muted-foreground" />
+                <Mail className="size-4 shrink-0 text-primary" />
                 {ayarlar.iletisimEmail}
               </li>
             )}
             {ayarlar?.iletisimTelefon && (
               <li className="flex items-center gap-2.5">
-                <Phone className="size-4 shrink-0 text-muted-foreground" />
+                <Phone className="size-4 shrink-0 text-primary" />
                 {ayarlar.iletisimTelefon}
               </li>
             )}
             {ayarlar?.iletisimAdres && (
               <li className="flex items-start gap-2.5">
-                <Globe className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <Globe className="mt-0.5 size-4 shrink-0 text-primary" />
                 {ayarlar.iletisimAdres}
               </li>
             )}

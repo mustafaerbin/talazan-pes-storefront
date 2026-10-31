@@ -3,9 +3,7 @@ import { getInternalApiBase, isLocalHost, TENANT_FIRMA_HEADER } from "@/lib/tena
 
 export { TENANT_FIRMA_HEADER, getInternalApiBase, isLocalHost };
 
-export async function resolveFirmaId(searchParams?: {
-  firmaId?: string | string[];
-}): Promise<number> {
+export async function resolveFirmaId(): Promise<number> {
   const h = await headers();
   const fromHeader = h.get(TENANT_FIRMA_HEADER);
   if (fromHeader && !Number.isNaN(Number(fromHeader))) {
@@ -13,17 +11,6 @@ export async function resolveFirmaId(searchParams?: {
   }
 
   const host = (h.get("x-forwarded-host") ?? h.get("host") ?? "").split(",")[0]?.trim() ?? "";
-  const hostOnly = host.split(":")[0] ?? "";
-
-  if (isLocalHost(hostOnly) || process.env.NODE_ENV === "development" || !hostOnly) {
-    const param = searchParams?.firmaId;
-    const value = Array.isArray(param) ? param[0] : param;
-    if (value && !Number.isNaN(Number(value))) {
-      return Number(value);
-    }
-    return Number(process.env.NEXT_PUBLIC_FIRMA_ID ?? "1");
-  }
-
   const resolved = await resolveFirmaIdForHost(host);
   if (resolved == null) {
     throw new Error("Magaza bulunamadi");
@@ -47,8 +34,8 @@ export async function getRequestSiteUrl(): Promise<string> {
 
 export async function resolveFirmaIdForHost(hostHeader: string): Promise<number | null> {
   const host = hostHeader.split(",")[0]?.trim();
-  if (!host || isLocalHost(host.split(":")[0] ?? "")) {
-    return Number(process.env.NEXT_PUBLIC_FIRMA_ID ?? "1");
+  if (!host) {
+    return null;
   }
   const base = getInternalApiBase();
   const response = await fetch(`${base}/public/store/resolve?host=${encodeURIComponent(host)}`, {

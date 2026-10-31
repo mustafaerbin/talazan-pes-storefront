@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getInternalApiBase, isLocalHost, TENANT_FIRMA_HEADER } from "@/lib/tenant-api";
+import { getInternalApiBase, TENANT_FIRMA_HEADER } from "@/lib/tenant-api";
 
 const resolveCache = new Map<string, { firmaId: number; expiresAt: number }>();
 const CACHE_TTL_MS = 60_000;
@@ -39,14 +39,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
-  let firmaId: number | null = null;
-  if (isLocalHost(hostOnly)) {
-    firmaId = Number(process.env.NEXT_PUBLIC_FIRMA_ID ?? "1");
-  } else {
-    firmaId = await resolveFirmaIdCached(hostWithPort || hostOnly);
-    if (firmaId == null) {
-      return new NextResponse("Magaza bulunamadi", { status: 404 });
-    }
+  const firmaId = await resolveFirmaIdCached(hostWithPort || hostOnly);
+  if (firmaId == null) {
+    return new NextResponse("Magaza bulunamadi", { status: 404 });
   }
 
   const requestHeaders = new Headers(request.headers);

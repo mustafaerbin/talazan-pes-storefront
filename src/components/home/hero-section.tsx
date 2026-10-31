@@ -62,17 +62,17 @@ export function HeroSection({ section, config, featured }: HeroSectionProps) {
     .join(" · ");
 
   return (
-    <section className="bg-[#1A1A1A] text-white">
+    <section className="bg-[hsl(var(--hero-bg))] text-primary-foreground">
       <div className="grid md:min-h-[420px] md:grid-cols-2 lg:min-h-[460px]">
         <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-16">
           {kicker && (
-            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/55">{kicker}</p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-primary-foreground/70">{kicker}</p>
           )}
           <h1 className="mt-4 max-w-xl text-[1.75rem] font-semibold leading-tight tracking-tight sm:text-4xl">
             {activeSlide.baslik}
           </h1>
           {activeSlide.altBaslik && (
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70 sm:text-[15px]">
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-primary-foreground/80 sm:text-[15px]">
               {activeSlide.altBaslik}
             </p>
           )}
@@ -80,7 +80,7 @@ export function HeroSection({ section, config, featured }: HeroSectionProps) {
             <div className="mt-8">
               <Link
                 href={activeSlide.ctaUrl}
-                className="inline-flex h-11 items-center gap-2 bg-white px-5 text-sm font-medium text-[#242424] transition-opacity hover:opacity-90"
+                className="inline-flex h-11 items-center gap-2 bg-brand-accent px-5 text-sm font-medium text-brand-accent-foreground transition-opacity hover:opacity-90"
               >
                 {activeSlide.ctaMetin ?? "Koleksiyonu keşfet"}
                 <span aria-hidden>→</span>
@@ -109,7 +109,7 @@ export function HeroSection({ section, config, featured }: HeroSectionProps) {
                   priority={activeIndex === 0}
                 />
               ) : (
-                <div className="h-full w-full bg-[#1A1A1A]" />
+                <div className="h-full w-full bg-[hsl(var(--hero-bg))]" />
               )}
             </motion.div>
           </AnimatePresence>

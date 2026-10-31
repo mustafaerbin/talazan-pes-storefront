@@ -40,23 +40,13 @@ function parseBlogPosts(icerik?: string): BlogPost[] {
   }
 }
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const config = await getStoreConfig(await resolveFirmaId(sp)).catch(() => null);
+export async function generateMetadata() {
+  const config = await getStoreConfig(await resolveFirmaId()).catch(() => null);
   return await buildStoreMetadata(config, { title: LABELS.blog, path: ROUTES.blog });
 }
 
-export default async function BlogPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const firmaId = await resolveFirmaId(sp);
+export default async function BlogPage() {
+  const firmaId = await resolveFirmaId();
   let page = null;
   try {
     page = await storeService.getPage(firmaId, PAGE_SLUGS.blog);
@@ -67,7 +57,7 @@ export default async function BlogPage({
   const posts = parseBlogPosts(page?.icerik);
 
   return (
-    <StoreLayoutShell searchParams={searchParams}>
+    <StoreLayoutShell>
       <div className="mx-auto max-w-4xl space-y-8">
         <Breadcrumbs items={[{ label: LABELS.blog }]} />
         <h1 className="text-3xl font-bold">{LABELS.blog}</h1>

@@ -19,6 +19,9 @@
   --border: 60 4% 90%;
   --input: 60 4% 90%;
   --ring: 0 0% 14%;
+  --brand-secondary: 60 4% 90%;
+  --brand-accent: 0 0% 100%;
+  --brand-accent-foreground: 0 0% 14%;
   --hero-bg: 0 0% 10%;
   --surface-elevated: 0 0% 100%;
   --topbar-bg: 0 0% 100%;
@@ -56,6 +59,9 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-brand-secondary: hsl(var(--brand-secondary));
+  --color-brand-accent: hsl(var(--brand-accent));
+  --color-brand-accent-foreground: hsl(var(--brand-accent-foreground));
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;

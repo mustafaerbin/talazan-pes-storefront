@@ -6,13 +6,8 @@ import { getRequestSiteUrl, resolveFirmaId } from "@/lib/tenant";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildOrganizationJsonLd, buildStoreMetadata } from "@/utils/seo";
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const params = await searchParams;
-  const firmaId = await resolveFirmaId(params);
+export async function generateMetadata() {
+  const firmaId = await resolveFirmaId();
   try {
     const { config } = await getStoreData(firmaId);
     return await buildStoreMetadata(config);
@@ -21,19 +16,14 @@ export async function generateMetadata({
   }
 }
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const params = await searchParams;
-  const firmaId = await resolveFirmaId(params);
+export default async function HomePage() {
+  const firmaId = await resolveFirmaId();
   const { config, categories, brands, productPools } = await getStoreData(firmaId);
   const sections = parseHomeSectionsFromConfig(config.header?.ekAyarlar);
   const siteUrl = await getRequestSiteUrl();
 
   return (
-    <StoreLayoutShell searchParams={searchParams} categories={categories} fullWidth>
+    <StoreLayoutShell categories={categories} fullWidth>
       <JsonLd data={await buildOrganizationJsonLd(config, siteUrl)} />
       <HomeSections
         firmaId={firmaId}

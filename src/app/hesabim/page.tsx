@@ -5,23 +5,14 @@ import { resolveFirmaId } from "@/lib/tenant";
 import { getStoreConfig } from "@/modules/store/store.server";
 import { buildStoreMetadata } from "@/utils/seo";
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const config = await getStoreConfig(await resolveFirmaId(sp)).catch(() => null);
+export async function generateMetadata() {
+  const config = await getStoreConfig(await resolveFirmaId()).catch(() => null);
   return await buildStoreMetadata(config, { title: LABELS.account, path: "/hesabim", noIndex: true });
 }
 
-export default function AccountPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
+export default function AccountPage() {
   return (
-    <StoreLayoutShell searchParams={searchParams}>
+    <StoreLayoutShell>
       <AccountProfile />
     </StoreLayoutShell>
   );

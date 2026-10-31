@@ -5,23 +5,14 @@ import { resolveFirmaId } from "@/lib/tenant";
 import { getStoreConfig } from "@/modules/store/store.server";
 import { buildStoreMetadata } from "@/utils/seo";
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const config = await getStoreConfig(await resolveFirmaId(sp)).catch(() => null);
+export async function generateMetadata() {
+  const config = await getStoreConfig(await resolveFirmaId()).catch(() => null);
   return await buildStoreMetadata(config, { title: LABELS.cart, path: "/sepet" });
 }
 
-export default function CartPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
+export default function CartPage() {
   return (
-    <StoreLayoutShell searchParams={searchParams}>
+    <StoreLayoutShell>
       <CartView />
     </StoreLayoutShell>
   );

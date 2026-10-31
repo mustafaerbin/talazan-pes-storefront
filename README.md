@@ -22,10 +22,9 @@ npm run dev
 | Değişken | Açıklama | Varsayılan |
 |----------|----------|------------|
 | `NEXT_PUBLIC_API_URL` | Backend API base URL | `http://localhost:8080/api` |
-| `NEXT_PUBLIC_FIRMA_ID` | Yalnızca localhost geliştirme firması | `1` |
 | `NEXT_PUBLIC_SITE_URL` | Yalnızca localhost site adresi | `http://localhost:3000` |
 
-Canlıda firma, domain üzerinden `GET /public/store/resolve` ile bulunur. `NEXT_PUBLIC_FIRMA_ID` tüm mağazaları kilitlemez.
+Firma, istek host'u üzerinden `GET /public/store/resolve` ile bulunur. Website ayarlarındaki domain, vitrinin açıldığı host ile aynı olmalıdır. `localhost` kaydı `https://localhost` olarak saklanır.
 
 ## Proje Yapısı
 

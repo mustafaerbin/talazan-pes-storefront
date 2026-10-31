@@ -11,7 +11,7 @@ interface NewsletterSectionProps {
 
 export function NewsletterSection({ title, subtitle }: NewsletterSectionProps) {
   return (
-    <section className="border-t border-border py-10">
+    <section className="border-t border-border bg-muted py-10">
       <div className="max-w-xl">
         <h2 className="text-xl font-semibold tracking-tight">{title ?? LABELS.newsletter}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{subtitle ?? LABELS.newsletterDesc}</p>

@@ -10,10 +10,10 @@ import { buildStoreMetadata } from "@/utils/seo";
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ firmaId?: string; q?: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const sp = await searchParams;
-  const firmaId = await resolveFirmaId(sp);
+  const firmaId = await resolveFirmaId();
   const config = await getStoreConfig(firmaId).catch(() => null);
   const q = sp.q ? `"${sp.q}"` : "";
   return await buildStoreMetadata(config, {
@@ -22,13 +22,9 @@ export async function generateMetadata({
   });
 }
 
-export default function SearchPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
+export default function SearchPage() {
   return (
-    <StoreLayoutShell searchParams={searchParams}>
+    <StoreLayoutShell>
       <Suspense fallback={<ProductGridSkeleton />}>
         <ProductListing title={LABELS.search} />
       </Suspense>

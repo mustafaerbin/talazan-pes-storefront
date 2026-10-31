@@ -45,13 +45,11 @@ async function getBlogPosts(firmaId: number): Promise<BlogPost[]> {
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ firmaId?: string }>;
 }) {
-  const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = await resolveFirmaId(sp);
+  const { slug } = await params;
+  const firmaId = await resolveFirmaId();
   const posts = await getBlogPosts(firmaId);
   const post = findBlogPost(posts, slug);
   const config = await getStoreConfig(firmaId).catch(() => null);
@@ -63,13 +61,11 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ firmaId?: string }>;
 }) {
-  const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = await resolveFirmaId(sp);
+  const { slug } = await params;
+  const firmaId = await resolveFirmaId();
   const posts = await getBlogPosts(firmaId);
   const post = findBlogPost(posts, slug);
 
@@ -84,7 +80,7 @@ export default async function BlogPostPage({
   const siteUrl = await getRequestSiteUrl();
 
   return (
-    <StoreLayoutShell searchParams={searchParams}>
+    <StoreLayoutShell>
       {config && <JsonLd data={await buildWebPageJsonLd(pageContent, config, siteUrl)} />}
       <div className="mx-auto max-w-3xl space-y-6">
         <Breadcrumbs

@@ -9,19 +9,16 @@ import type { FirmaKategoriDto } from "@/types/api";
 
 interface StoreLayoutShellProps {
   children: React.ReactNode;
-  searchParams?: Promise<{ firmaId?: string }>;
   categories?: FirmaKategoriDto[];
   fullWidth?: boolean;
 }
 
 export async function StoreLayoutShell({
   children,
-  searchParams,
   categories: categoriesProp,
   fullWidth = false,
 }: StoreLayoutShellProps) {
-  const params = searchParams ? await searchParams : undefined;
-  const firmaId = await resolveFirmaId(params);
+  const firmaId = await resolveFirmaId();
   let config;
 
   try {

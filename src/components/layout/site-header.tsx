@@ -139,7 +139,7 @@ export function SiteHeader({ config, categories = [] }: SiteHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
-      <div className="border-b border-border text-[11px] text-muted-foreground">
+      <div className="border-b border-border bg-[hsl(var(--topbar-bg))] text-[11px] text-[hsl(var(--topbar-fg))]">
         <div className="container mx-auto flex h-8 items-center justify-between gap-x-4 px-4">
           <p className="hidden shrink-0 uppercase tracking-[0.14em] sm:block">{brandKicker}</p>
           <AnnouncementTicker texts={announcements} />

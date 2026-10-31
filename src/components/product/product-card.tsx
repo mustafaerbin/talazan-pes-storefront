@@ -131,7 +131,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </button>
 
         {hasDiscount && (
-          <span className="pointer-events-none absolute bottom-3 left-3 z-10 bg-background/95 px-2 py-1 text-[11px] font-medium text-foreground">
+          <span className="pointer-events-none absolute bottom-3 left-3 z-10 bg-brand-accent px-2 py-1 text-[11px] font-medium text-brand-accent-foreground">
             %{discountPercent} indirim
           </span>
         )}

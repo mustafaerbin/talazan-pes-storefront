@@ -8,13 +8,11 @@ import { buildStoreMetadata } from "@/utils/seo";
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ firmaId?: string }>;
 }) {
-  const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = await resolveFirmaId(sp);
+  const { slug } = await params;
+  const firmaId = await resolveFirmaId();
   const config = await getStoreConfig(firmaId).catch(() => null);
   const categories = await getStoreCategories(firmaId).catch(() => []);
   const category = categories.find((c) => c.slug === slug || String(c.id) === slug);
@@ -26,18 +24,16 @@ export async function generateMetadata({
 
 export default async function CategoryPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ firmaId?: string }>;
 }) {
-  const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = await resolveFirmaId(sp);
+  const { slug } = await params;
+  const firmaId = await resolveFirmaId();
   const categories = await getStoreCategories(firmaId).catch(() => []);
   const category = categories.find((c) => c.slug === slug || String(c.id) === slug);
 
   return (
-    <StoreLayoutShell searchParams={searchParams} categories={categories}>
+    <StoreLayoutShell categories={categories}>
       <Suspense fallback={<ProductGridSkeleton />}>
         <ProductListing
           title={category?.isim ?? "Kategori"}

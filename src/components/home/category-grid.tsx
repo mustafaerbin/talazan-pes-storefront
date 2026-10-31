@@ -41,7 +41,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
             }`}
           >
             <span className="inline-flex items-center gap-3">
-              <item.Icon className="size-4 text-muted-foreground" />
+              <item.Icon className="size-4 text-primary" />
               <span>{item.label}</span>
             </span>
             <ArrowRight className="size-4 text-muted-foreground" />

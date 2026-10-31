@@ -20,13 +20,11 @@ function plainDescription(html?: string): string | undefined {
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ firmaId?: string }>;
 }) {
-  const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = await resolveFirmaId(sp);
+  const { slug } = await params;
+  const firmaId = await resolveFirmaId();
   try {
     const [config, product] = await Promise.all([
       getStoreConfig(firmaId),
@@ -45,13 +43,11 @@ export async function generateMetadata({
 
 export default async function ProductPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ firmaId?: string }>;
 }) {
-  const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  const firmaId = await resolveFirmaId(sp);
+  const { slug } = await params;
+  const firmaId = await resolveFirmaId();
 
   let product;
   try {
@@ -71,7 +67,7 @@ export default async function ProductPage({
   const siteUrl = await getRequestSiteUrl();
 
   return (
-    <StoreLayoutShell searchParams={searchParams}>
+    <StoreLayoutShell>
       <JsonLd data={await buildProductJsonLd(product, siteUrl)} />
       <ProductDetailView product={product} related={related} />
     </StoreLayoutShell>

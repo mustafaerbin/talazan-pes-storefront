@@ -366,7 +366,7 @@ export function ProductDetailView({ product, related = [], embedded = false }: P
             )}
 
             {hasDiscount && (
-              <span className="absolute bottom-4 left-4 bg-background px-2 py-1 text-[11px] font-medium">
+              <span className="absolute bottom-4 left-4 bg-brand-accent px-2 py-1 text-[11px] font-medium text-brand-accent-foreground">
                 %{percent} indirim
               </span>
             )}

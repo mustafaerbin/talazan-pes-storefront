@@ -7,23 +7,13 @@ import { getStoreConfig } from "@/modules/store/store.server";
 import { storeService } from "@/services/store.service";
 import { buildStoreMetadata } from "@/utils/seo";
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const config = await getStoreConfig(await resolveFirmaId(sp)).catch(() => null);
+export async function generateMetadata() {
+  const config = await getStoreConfig(await resolveFirmaId()).catch(() => null);
   return await buildStoreMetadata(config, { title: LABELS.privacy, path: ROUTES.privacy });
 }
 
-export default async function PrivacyPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const firmaId = await resolveFirmaId(sp);
+export default async function PrivacyPage() {
+  const firmaId = await resolveFirmaId();
   let page = null;
   try {
     page = await storeService.getPage(firmaId, PAGE_SLUGS.privacy);
@@ -32,7 +22,7 @@ export default async function PrivacyPage({
   }
 
   return (
-    <StoreLayoutShell searchParams={searchParams}>
+    <StoreLayoutShell>
       <div className="mx-auto max-w-4xl space-y-6">
         <Breadcrumbs items={[{ label: LABELS.privacy }]} />
         {page ? (

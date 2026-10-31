@@ -8,24 +8,14 @@ import { getStoreConfig } from "@/modules/store/store.server";
 import { storeService } from "@/services/store.service";
 import { buildStoreMetadata } from "@/utils/seo";
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const firmaId = await resolveFirmaId(sp);
+export async function generateMetadata() {
+  const firmaId = await resolveFirmaId();
   const config = await getStoreConfig(firmaId).catch(() => null);
   return await buildStoreMetadata(config, { title: LABELS.contact, path: ROUTES.contact });
 }
 
-export default async function ContactPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ firmaId?: string }>;
-}) {
-  const sp = await searchParams;
-  const firmaId = await resolveFirmaId(sp);
+export default async function ContactPage() {
+  const firmaId = await resolveFirmaId();
   const config = await getStoreConfig(firmaId).catch(() => null);
   let page = null;
   try {
@@ -35,7 +25,7 @@ export default async function ContactPage({
   }
 
   return (
-    <StoreLayoutShell searchParams={searchParams}>
+    <StoreLayoutShell>
       <div className="mx-auto max-w-4xl space-y-8">
         <Breadcrumbs items={[{ label: LABELS.contact }]} />
         <div className="space-y-2">
